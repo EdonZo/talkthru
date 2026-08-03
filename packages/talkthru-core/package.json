@@ -1,0 +1,61 @@
+{
+  "name": "talkthru",
+  "version": "0.1.0",
+  "description": "Talk while you use your app; your coding agent gets the screens you saw and the words you said, lined up. Runs entirely on your machine.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "talkthru": "./dist/cli.js",
+    "tt": "./dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20.11"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "busboy": "^1.6.0"
+  },
+  "devDependencies": {
+    "@types/busboy": "^1.5.4"
+  },
+  "keywords": [
+    "mcp",
+    "claude",
+    "claude-code",
+    "screen-recording",
+    "whisper",
+    "feedback",
+    "ai",
+    "agent",
+    "ffmpeg",
+    "transcription",
+    "ios"
+  ],
+  "homepage": "https://talkthru.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EdonZo/talkthru.git",
+    "directory": "packages/talkthru-core"
+  },
+  "bugs": {
+    "url": "https://github.com/EdonZo/talkthru/issues"
+  },
+  "author": "Edon Zogaj",
+  "publishConfig": {
+    "access": "public"
+  }
+}

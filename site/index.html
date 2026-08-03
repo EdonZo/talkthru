@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>talkthru — talk while you use your app</title>
+<meta name="description" content="Record your screen, say what's wrong out loud, drop it on your Mac. Your coding agent gets the frames you saw and the words you said, aligned. Free, open source, and runs fully offline.">
+<meta name="theme-color" content="#08090b">
+<link rel="canonical" href="https://talkthru.dev/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="author" content="Edon Zogaj">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="talkthru">
+<meta property="og:title" content="talkthru — talk while you use your app">
+<meta property="og:description" content="Say what's wrong out loud. Your coding agent gets the frames and the words, aligned. Fully local.">
+<meta property="og:url" content="https://talkthru.dev/">
+<meta property="og:image" content="https://talkthru.dev/img/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="talkthru — talk while you use your app, your agent listens">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="talkthru — talk while you use your app">
+<meta name="twitter:description" content="Say what's wrong out loud. Your coding agent gets the frames and the words, aligned. Fully local.">
+<meta name="twitter:image" content="https://talkthru.dev/img/og.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "talkthru",
+  "url": "https://talkthru.dev/",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "macOS",
+  "description": "Record your screen while talking. talkthru turns it into frames plus narration, aligned, and hands it to your coding agent over MCP. Runs fully offline.",
+  "license": "https://opensource.org/licenses/MIT",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "author": { "@type": "Person", "name": "Edon Zogaj" },
+  "codeRepository": "https://github.com/EdonZo/talkthru",
+  "downloadUrl": "https://www.npmjs.com/package/talkthru"
+}
+</script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230b0c0f'/><path d='M8 12h16M8 17h11' stroke='%2364e0b4' stroke-width='2.5' stroke-linecap='round'/><circle cx='23' cy='22' r='2' fill='%2364e0b4'/></svg>">
+<style>
+  :root {
+    --bg: #08090b;
+    --surface: #0e1014;
+    --surface-2: #12151a;
+    --ink: #f2f4f7;
+    --dim: #8a919c;
+    --faint: #5a616b;
+    --mint: #64e0b4;
+    --amber: #e8b981;
+    --line: #1c2027;
+    --mono: ui-monospace, 'SF Mono', 'SFMono-Regular', Menlo, monospace;
+    --sans: -apple-system, 'SF Pro Display', 'Inter', system-ui, sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: var(--sans); line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: 'ss01', 'cv05';
+  }
+  /* faint grid, the only decoration */
+  body::before {
+    content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse 90% 55% at 50% 0%, #000 20%, transparent 78%);
+    opacity: .5;
+  }
+  main { position: relative; z-index: 1; max-width: 760px; margin: 0 auto; padding: 0 24px; }
+  a { color: inherit; }
+
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 22px 0 0; font-size: 14px;
+  }
+  .mark { font-family: var(--mono); font-weight: 600; letter-spacing: -.02em; }
+  .mark i { color: var(--mint); font-style: normal; }
+  nav .links { display: flex; gap: 20px; color: var(--dim); }
+  nav .links a { text-decoration: none; }
+  nav .links a:hover { color: var(--ink); }
+
+  .hero { padding: 86px 0 0; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: var(--mono); font-size: 12px; color: var(--dim);
+    border: 1px solid var(--line); border-radius: 999px;
+    padding: 5px 12px; margin-bottom: 26px;
+  }
+  .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--mint); }
+  h1 {
+    font-size: clamp(38px, 7vw, 60px); line-height: 1.02;
+    letter-spacing: -.045em; font-weight: 600;
+  }
+  h1 .g {
+    background: linear-gradient(100deg, var(--mint), #7ec8ff 60%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .sub {
+    margin-top: 20px; font-size: 19px; color: var(--dim);
+    max-width: 33rem; letter-spacing: -.011em;
+  }
+
+  ol.run { list-style: none; margin-top: 32px; display: grid; gap: 18px; }
+  ol.run li { display: flex; gap: 14px; align-items: flex-start; }
+  ol.run .n {
+    font-family: var(--mono); font-size: 11.5px; color: var(--mint);
+    border: 1px solid var(--line); border-radius: 6px;
+    width: 24px; height: 24px; display: grid; place-items: center;
+    flex-shrink: 0; margin-top: 5px;
+  }
+  ol.run .body { flex: 1; min-width: 0; }
+  ol.run .lbl { font-size: 15px; color: var(--ink); margin-bottom: 8px; letter-spacing: -.01em; }
+  ol.run .hint { font-size: 13.5px; color: var(--faint); }
+  ol.run .cmd { margin-top: 0; max-width: none; }
+  .ask {
+    background: rgba(100,224,180,.06); border: 1px solid rgba(100,224,180,.22);
+    border-radius: 9px; padding: 12px 15px; font-size: 14.5px; color: var(--mint);
+  }
+
+  .cmd {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 9px; padding: 13px 15px;
+    font-family: var(--mono); font-size: 14px; max-width: 27rem;
+  }
+  .cmd .p { color: var(--faint); }
+  .cmd code { flex: 1; }
+  .cmd button {
+    font-family: var(--sans); font-size: 12px; color: var(--faint);
+    background: transparent; border: 1px solid var(--line);
+    border-radius: 5px; padding: 3px 9px; cursor: pointer;
+  }
+  .cmd button:hover { color: var(--ink); border-color: var(--faint); }
+  .meta { margin-top: 11px; font-family: var(--mono); font-size: 12.5px; color: var(--faint); }
+  .tested { margin-top: 14px; font-size: 14px; color: var(--dim); max-width: 34rem; }
+
+  /* terminal */
+  .term {
+    margin-top: 52px; background: var(--surface); border: 1px solid var(--line);
+    border-radius: 11px; overflow: hidden;
+  }
+  .term .top {
+    display: flex; align-items: center; gap: 7px;
+    padding: 11px 14px; border-bottom: 1px solid var(--line); background: var(--surface-2);
+  }
+  .term .top i { width: 9px; height: 9px; border-radius: 50%; background: #2b313a; }
+  .term .top span {
+    font-family: var(--mono); font-size: 11.5px; color: var(--faint); margin-left: 6px;
+  }
+  .term pre {
+    padding: 18px 18px 20px; font-family: var(--mono);
+    font-size: 13px; line-height: 1.75; overflow-x: auto; color: var(--dim);
+  }
+  .c { color: var(--faint); }
+  .m { color: var(--mint); }
+  .a { color: var(--amber); }
+  .w { color: var(--ink); }
+
+  .flow {
+    display: grid; gap: 2px; margin-top: 52px;
+    border: 1px solid var(--line); border-radius: 11px; overflow: hidden;
+    background: var(--line);
+  }
+  @media (min-width: 640px) { .flow { grid-template-columns: repeat(3, 1fr); } }
+  .flow div { background: var(--bg); padding: 20px 18px; }
+  .flow b {
+    display: block; font-family: var(--mono); font-size: 11.5px;
+    color: var(--mint); font-weight: 500; margin-bottom: 8px;
+  }
+  .flow p { font-size: 14.5px; color: var(--dim); line-height: 1.5; }
+  .flow p em { color: var(--ink); font-style: normal; }
+
+  .setup { margin-top: 52px; }
+  .setup h2 {
+    font-family: var(--mono); font-size: 12px; color: var(--faint);
+    font-weight: 500; letter-spacing: .04em; text-transform: uppercase; margin-bottom: 14px;
+  }
+  .setup pre {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 9px;
+    padding: 16px 18px; font-family: var(--mono); font-size: 13px;
+    line-height: 1.85; overflow-x: auto; color: var(--dim);
+  }
+  .setup .after { margin-top: 14px; font-size: 14.5px; color: var(--dim); }
+
+  /* phone steps — one line of text each, screenshot underneath */
+  ol.phone { list-style: none; display: grid; gap: 2px;
+    border: 1px solid var(--line); border-radius: 9px; overflow: hidden; background: var(--line); }
+  @media (min-width: 560px) { ol.phone { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 900px) { ol.phone { grid-template-columns: repeat(3, 1fr); } }
+  ol.phone li { background: var(--bg); padding: 16px; display: flex; gap: 10px; }
+  ol.phone .s {
+    font-family: var(--mono); font-size: 11px; color: var(--mint);
+    border: 1px solid var(--line); border-radius: 5px;
+    width: 22px; height: 22px; display: grid; place-items: center; flex-shrink: 0;
+  }
+  ol.phone p { font-size: 13.5px; color: var(--dim); line-height: 1.45; }
+  ol.phone p em { color: var(--ink); font-style: normal; }
+  ol.phone p strong { color: var(--ink); font-weight: 550; }
+  ol.phone img {
+    display: block; width: 100%; margin-top: 12px;
+    border: 1px solid var(--line); border-radius: 7px; background: var(--surface);
+  }
+
+  footer {
+    margin-top: 64px; padding: 22px 0 56px; border-top: 1px solid var(--line);
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 14px;
+    font-size: 13.5px; color: var(--faint);
+  }
+  footer a { text-decoration: none; }
+  footer a:hover { color: var(--ink); }
+  footer nav { padding: 0; display: flex; gap: 18px; }
+</style>
+</head>
+<body>
+<main>
+  <nav>
+    <div class="mark">talk<i>thru</i></div>
+    <div class="links">
+      <a href="https://github.com/EdonZo/talkthru">GitHub</a>
+      <a href="https://npmjs.com/package/talkthru">npm</a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="chip"><span class="dot"></span> runs entirely on your machine</div>
+    <h1>Talk while you use your app.<br><span class="g">Your agent listens.</span></h1>
+    <p class="sub">
+      Record. Say what's wrong out loud. AirDrop it over. Claude Code gets the frames
+      you saw and the words you said — aligned.
+    </p>
+
+    <ol class="run">
+      <li>
+        <span class="n">1</span>
+        <div class="body">
+          <p class="lbl">Watch for recordings</p>
+          <div class="cmd"><span class="p">$</span><code>npx talkthru watch</code><button onclick="cp(this)">Copy</button></div>
+        </div>
+      </li>
+      <li>
+        <span class="n">2</span>
+        <div class="body">
+          <p class="lbl">Tell Claude Code about it</p>
+          <div class="cmd"><span class="p">$</span><code>claude mcp add --scope user talkthru -- npx talkthru-mcp</code><button onclick="cp(this)">Copy</button></div>
+        </div>
+      </li>
+      <li>
+        <span class="n">3</span>
+        <div class="body">
+          <p class="lbl">Record on your phone and talk. AirDrop it over.</p>
+          <p class="hint">Screen recorder with the mic on — setup below. Nothing goes in your app.</p>
+        </div>
+      </li>
+      <li>
+        <span class="n">4</span>
+        <div class="body">
+          <p class="lbl">Ask Claude</p>
+          <div class="ask">“check the feedback in my last talkthru session and implement it”</div>
+        </div>
+      </li>
+    </ol>
+    <div class="meta">macOS · ffmpeg + whisper.cpp · no accounts, no keys, no telemetry</div>
+    <p class="tested">Tested on macOS with an iPhone. Anything that produces a video with sound should work &mdash; point the watcher at a folder.</p>
+  </section>
+
+
+
+
+  <section class="setup">
+    <h2>Prerequisites — once, on your Mac</h2>
+<pre>npx talkthru doctor <span class="m">--fix</span></pre>
+    <p class="after">
+      Installs ffmpeg and whisper.cpp via Homebrew if they're missing, and downloads the
+      speech model. They're native binaries rather than npm packages — bundling them would
+      cost ~100&nbsp;MB and lose the hardware acceleration that makes transcription fast.
+    </p>
+  </section>
+
+  <section class="setup">
+    <h2>Setup — once, on your phone</h2>
+    <ol class="phone">
+      <li>
+        <span class="s">1</span>
+        <div>
+          <p>Open Control Centre and tap <strong>+</strong>.</p>
+          <img src="img/web/ios-1-plus.jpg" alt="Control Centre with the plus button highlighted in the top-left" loading="lazy" decoding="async">
+        </div>
+      </li>
+      <li>
+        <span class="s">2</span>
+        <div>
+          <p>Tap <strong>Add a Control</strong> at the bottom.</p>
+          <img src="img/web/ios-2-add-control.png" alt="Control Centre in edit mode with Add a Control highlighted" loading="lazy" decoding="async">
+        </div>
+      </li>
+      <li>
+        <span class="s">3</span>
+        <div>
+          <p>Search <em>screen</em>, pick <strong>Screen Recording</strong>.</p>
+          <img src="img/web/ios-3-screen-recording.png" alt="Control gallery showing the Screen Recording control" loading="lazy" decoding="async">
+        </div>
+      </li>
+      <li>
+        <span class="s">4</span>
+        <div>
+          <p><strong>Press and hold</strong> the new ◉ button.</p>
+          <img src="img/web/ios-4-long-press.png" alt="Screen Recording panel with the microphone off" loading="lazy" decoding="async">
+        </div>
+      </li>
+      <li>
+        <span class="s">5</span>
+        <div>
+          <p>Tap the mic so it reads <strong>Microphone On</strong>.</p>
+          <img src="img/web/ios-5-mic-on.png" alt="Screen Recording panel with the microphone switched on" loading="lazy" decoding="async">
+        </div>
+      </li>
+      <li>
+        <span class="s">6</span>
+        <div>
+          <p>Tap <strong>◉</strong> to record. Talk as you go.</p>
+          <img src="img/web/ios-6-rec.png" alt="Control Centre with the record button active and a countdown" loading="lazy" decoding="async">
+        </div>
+      </li>
+    </ol>
+    <p class="after">
+      Then: record, talk, AirDrop. If your app talks back, mute it first — otherwise its
+      voice lands in the transcript next to yours.
+    </p>
+  </section>
+
+  <section class="setup">
+    <h2>What your agent reads</h2>
+    <div class="term">
+    <div class="top"><i></i><i></i><i></i><span>session.md</span></div>
+<pre><span class="c">## 00:34 · f11 — frames/f11.jpg</span>
+- [00:39] <span class="a">"the settings here is a bit off, you have to
+           scroll down instead of the whole sheet"</span>
+
+<span class="c">## 00:54 · f13 — frames/f13.jpg</span>
+- [01:01] <span class="a">"this is pretty ugly, the star is overlaid"</span>
+- [01:08] <span class="a">"and the quest shouldn't be to use the app —
+           it should be to explore the planet"</span>
+
+<span class="c">→</span> <span class="m">20 frames</span> · <span class="m">22 utterances</span> · <span class="m">~600 tokens</span> <span class="c">for 107s</span></pre>
+    </div>
+  </section>
+
+  <footer>
+    <div>MIT · built in the open</div>
+    <nav>
+      <a href="https://github.com/EdonZo/talkthru">GitHub</a>
+      <a href="https://npmjs.com/package/talkthru">npm</a>
+    </nav>
+  </footer>
+</main>
+<script>
+  function cp(b) {
+    const text = b.parentElement.querySelector('code').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      const t = b.textContent; b.textContent = 'Copied';
+      setTimeout(() => (b.textContent = t), 1300);
+    });
+  }
+</script>
+</body>
+</html>

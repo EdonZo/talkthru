@@ -1,0 +1,26 @@
+{
+  "name": "talkthru-monorepo",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20.11"
+  },
+  "scripts": {
+    "build": "npm run build --workspace talkthru && npm run build --workspace talkthru-mcp",
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "fixture": "node scripts/make-fixture.mjs",
+    "fixture:audio": "node scripts/make-fixture-audio.mjs",
+    "golden:accept": "cd packages/talkthru-core && GOLDEN_ACCEPT=1 npx vitest run test/pipeline.test.ts",
+    "e2e:whisper": "cd packages/talkthru-core && TALKTHRU_E2E_WHISPER=1 npx vitest run test/e2e-whisper.test.ts",
+    "doctor": "node packages/talkthru-core/dist/cli.js doctor"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8",
+    "@types/node": "^22.10.2"
+  }
+}

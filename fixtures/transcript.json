@@ -1,0 +1,392 @@
+{
+  "note": "Captured from real whisper.cpp base.en on fixtures/generated/fixture-audio.wav. Used by the golden test through a fake transcriber so CI needs neither whisper nor macOS say.",
+  "engine": "whisper.cpp:base.en",
+  "coarseTiming": false,
+  "language": "en",
+  "words": [
+    {
+      "text": "This",
+      "startMs": 2012,
+      "endMs": 2202,
+      "segmentIndex": 0
+    },
+    {
+      "text": "is",
+      "startMs": 2202,
+      "endMs": 2292,
+      "segmentIndex": 0
+    },
+    {
+      "text": "the",
+      "startMs": 2292,
+      "endMs": 2492,
+      "segmentIndex": 0
+    },
+    {
+      "text": "home",
+      "startMs": 2492,
+      "endMs": 2762,
+      "segmentIndex": 0
+    },
+    {
+      "text": "screen,",
+      "startMs": 2762,
+      "endMs": 3492,
+      "segmentIndex": 0
+    },
+    {
+      "text": "the",
+      "startMs": 3492,
+      "endMs": 3512,
+      "segmentIndex": 0
+    },
+    {
+      "text": "header",
+      "startMs": 3512,
+      "endMs": 4012,
+      "segmentIndex": 0
+    },
+    {
+      "text": "spacing",
+      "startMs": 4012,
+      "endMs": 4362,
+      "segmentIndex": 0
+    },
+    {
+      "text": "at",
+      "startMs": 4362,
+      "endMs": 4522,
+      "segmentIndex": 0
+    },
+    {
+      "text": "the",
+      "startMs": 4522,
+      "endMs": 4692,
+      "segmentIndex": 0
+    },
+    {
+      "text": "top",
+      "startMs": 4692,
+      "endMs": 4912,
+      "segmentIndex": 0
+    },
+    {
+      "text": "looks",
+      "startMs": 4912,
+      "endMs": 5222,
+      "segmentIndex": 0
+    },
+    {
+      "text": "wrong.",
+      "startMs": 5222,
+      "endMs": 5812,
+      "segmentIndex": 0
+    },
+    {
+      "text": "Now",
+      "startMs": 12008,
+      "endMs": 12098,
+      "segmentIndex": 1
+    },
+    {
+      "text": "I",
+      "startMs": 12098,
+      "endMs": 12168,
+      "segmentIndex": 1
+    },
+    {
+      "text": "tap",
+      "startMs": 12168,
+      "endMs": 12378,
+      "segmentIndex": 1
+    },
+    {
+      "text": "Mars",
+      "startMs": 12378,
+      "endMs": 12728,
+      "segmentIndex": 1
+    },
+    {
+      "text": "and",
+      "startMs": 12728,
+      "endMs": 12878,
+      "segmentIndex": 1
+    },
+    {
+      "text": "the",
+      "startMs": 12878,
+      "endMs": 13088,
+      "segmentIndex": 1
+    },
+    {
+      "text": "Planet",
+      "startMs": 13088,
+      "endMs": 13518,
+      "segmentIndex": 1
+    },
+    {
+      "text": "card",
+      "startMs": 13518,
+      "endMs": 13808,
+      "segmentIndex": 1
+    },
+    {
+      "text": "opened.",
+      "startMs": 13808,
+      "endMs": 14368,
+      "segmentIndex": 1
+    },
+    {
+      "text": "The",
+      "startMs": 22006,
+      "endMs": 22176,
+      "segmentIndex": 2
+    },
+    {
+      "text": "fact",
+      "startMs": 22176,
+      "endMs": 22496,
+      "segmentIndex": 2
+    },
+    {
+      "text": "panel",
+      "startMs": 22496,
+      "endMs": 22836,
+      "segmentIndex": 2
+    },
+    {
+      "text": "down",
+      "startMs": 22836,
+      "endMs": 23106,
+      "segmentIndex": 2
+    },
+    {
+      "text": "here",
+      "startMs": 23106,
+      "endMs": 23456,
+      "segmentIndex": 2
+    },
+    {
+      "text": "is",
+      "startMs": 23456,
+      "endMs": 23546,
+      "segmentIndex": 2
+    },
+    {
+      "text": "too",
+      "startMs": 23546,
+      "endMs": 23776,
+      "segmentIndex": 2
+    },
+    {
+      "text": "low",
+      "startMs": 23776,
+      "endMs": 24006,
+      "segmentIndex": 2
+    },
+    {
+      "text": "on",
+      "startMs": 24006,
+      "endMs": 24196,
+      "segmentIndex": 2
+    },
+    {
+      "text": "the",
+      "startMs": 24196,
+      "endMs": 24386,
+      "segmentIndex": 2
+    },
+    {
+      "text": "screen.",
+      "startMs": 24386,
+      "endMs": 25326,
+      "segmentIndex": 2
+    },
+    {
+      "text": "This",
+      "startMs": 32012,
+      "endMs": 32202,
+      "segmentIndex": 3
+    },
+    {
+      "text": "is",
+      "startMs": 32202,
+      "endMs": 32262,
+      "segmentIndex": 3
+    },
+    {
+      "text": "Settings.",
+      "startMs": 32262,
+      "endMs": 33132,
+      "segmentIndex": 3
+    },
+    {
+      "text": "The",
+      "startMs": 33132,
+      "endMs": 33642,
+      "segmentIndex": 3
+    },
+    {
+      "text": "Close",
+      "startMs": 33642,
+      "endMs": 34502,
+      "segmentIndex": 3
+    },
+    {
+      "text": "button",
+      "startMs": 34502,
+      "endMs": 35082,
+      "segmentIndex": 3
+    },
+    {
+      "text": "was",
+      "startMs": 35082,
+      "endMs": 35082,
+      "segmentIndex": 3
+    },
+    {
+      "text": "way",
+      "startMs": 35082,
+      "endMs": 35082,
+      "segmentIndex": 3
+    },
+    {
+      "text": "too",
+      "startMs": 35082,
+      "endMs": 35082,
+      "segmentIndex": 3
+    },
+    {
+      "text": "small.",
+      "startMs": 35082,
+      "endMs": 38892,
+      "segmentIndex": 3
+    },
+    {
+      "text": "I",
+      "startMs": 41966,
+      "endMs": 42006,
+      "segmentIndex": 4
+    },
+    {
+      "text": "am",
+      "startMs": 42006,
+      "endMs": 42126,
+      "segmentIndex": 4
+    },
+    {
+      "text": "back",
+      "startMs": 42126,
+      "endMs": 42436,
+      "segmentIndex": 4
+    },
+    {
+      "text": "on",
+      "startMs": 42436,
+      "endMs": 42596,
+      "segmentIndex": 4
+    },
+    {
+      "text": "the",
+      "startMs": 42596,
+      "endMs": 42846,
+      "segmentIndex": 4
+    },
+    {
+      "text": "home",
+      "startMs": 42846,
+      "endMs": 43206,
+      "segmentIndex": 4
+    },
+    {
+      "text": "screen",
+      "startMs": 43206,
+      "endMs": 43616,
+      "segmentIndex": 4
+    },
+    {
+      "text": "again,",
+      "startMs": 43616,
+      "endMs": 44206,
+      "segmentIndex": 4
+    },
+    {
+      "text": "same",
+      "startMs": 44206,
+      "endMs": 44566,
+      "segmentIndex": 4
+    },
+    {
+      "text": "spacing",
+      "startMs": 44566,
+      "endMs": 45026,
+      "segmentIndex": 4
+    },
+    {
+      "text": "problem.",
+      "startMs": 45026,
+      "endMs": 45806,
+      "segmentIndex": 4
+    },
+    {
+      "text": "and",
+      "startMs": 52006,
+      "endMs": 52136,
+      "segmentIndex": 5
+    },
+    {
+      "text": "this",
+      "startMs": 52136,
+      "endMs": 52466,
+      "segmentIndex": 5
+    },
+    {
+      "text": "error",
+      "startMs": 52466,
+      "endMs": 52886,
+      "segmentIndex": 5
+    },
+    {
+      "text": "state,",
+      "startMs": 52886,
+      "endMs": 53446,
+      "segmentIndex": 5
+    },
+    {
+      "text": "the",
+      "startMs": 53446,
+      "endMs": 53636,
+      "segmentIndex": 5
+    },
+    {
+      "text": "yellow",
+      "startMs": 53636,
+      "endMs": 54016,
+      "segmentIndex": 5
+    },
+    {
+      "text": "is",
+      "startMs": 54016,
+      "endMs": 54136,
+      "segmentIndex": 5
+    },
+    {
+      "text": "far",
+      "startMs": 54136,
+      "endMs": 54326,
+      "segmentIndex": 5
+    },
+    {
+      "text": "too",
+      "startMs": 54326,
+      "endMs": 54516,
+      "segmentIndex": 5
+    },
+    {
+      "text": "bright.",
+      "startMs": 54516,
+      "endMs": 55886,
+      "segmentIndex": 5
+    }
+  ]
+}

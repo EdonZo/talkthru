@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# A failing job must be readable without a human reproducing it locally, so
+# every step prints what it ran and the test reporters stay verbose.
+jobs:
+  node:
+    name: Node ${{ matrix.node }} · ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        node: ['20.11', '22', '24']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      # ffmpeg is a hard dependency of the pipeline tests. It is NOT reliably
+      # preinstalled on the runners, so install it explicitly rather than
+      # discovering its absence as a confusing test failure.
+      - name: Install ffmpeg (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Install ffmpeg (macOS)
+        if: runner.os == 'macOS'
+        run: brew install ffmpeg || brew upgrade ffmpeg
+
+      - name: Show toolchain
+        run: |
+          node --version
+          npm --version
+          ffmpeg -version | head -1
+          ffprobe -version | head -1
+
+      - run: npm ci
+
+      # Build BEFORE typecheck: talkthru-mcp imports talkthru's emitted .d.ts
+      # files, so a clean checkout cannot typecheck the MCP package until core
+      # has been compiled. Reversing these two is what broke the first CI run.
+      - name: Build
+        run: npm run build
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      # Deterministic: hard cuts on integer seconds, flat colours. Regenerated
+      # here rather than committed so the repo stays clonable.
+      - name: Generate fixture
+        run: npm run fixture
+
+      # whisper.cpp is deliberately NOT installed. The suite must pass without
+      # it: the golden test replays committed whisper output through a fake
+      # transcriber. If a test starts needing a model, that is the bug.
+      - name: Test
+        run: npm test
+        env:
+          TALKTHRU_LOG: warn
+
+      - name: Golden diff on failure
+        if: failure()
+        run: |
+          echo "::group::expected-session.md"
+          cat fixtures/expected-session.md || true
+          echo "::endgroup::"

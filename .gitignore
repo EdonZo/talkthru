@@ -1,0 +1,23 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.DS_Store
+
+# Generated test media (regenerate with `npm run fixture`)
+fixtures/generated/
+
+# Swift
+# Any Swift build output, whatever the package is called.
+.build/
+.swiftpm/
+*.xcuserstate
+
+# Local runtime
+.talkthru-test-home/
+coverage/
+
+# Local agent config and machine-specific notes — not part of the app.
+.claude/
+
+# Firebase deploy cache
+site/.firebase/
