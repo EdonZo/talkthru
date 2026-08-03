@@ -2,15 +2,16 @@
 
 **[talkthru.dev](https://talkthru.dev)** · [npm](https://www.npmjs.com/package/talkthru) · MIT
 
-Talk while you use your app. Your coding agent sees what you saw and hears what you meant.
+An automated feedback loop for any app. Test on your phone, say what's wrong while you're
+looking at it, and your coding agent gets the screens and your words together.
 
-No more screenshot → crop → draw an arrow → type "the spacing at the top is off". You record your screen, say what's wrong out loud, and drop the file on your Mac. Claude Code reads it back as screens plus your words, lined up.
+One 107-second recording turned into five concrete issues in about twenty seconds of
+processing. No screenshots, no writing anything down.
 
 ```
 you:    *taps around* "this quest card sits on top of the sun, it washes out"
 
-Claude: reads the frame where that happened, sees the card and the glow behind it,
-        and fixes the right component.
+Claude: reads that exact frame, sees the card against the glow, fixes the component.
 ```
 
 Everything runs on your machine. No accounts, no uploads, no API keys.
@@ -95,9 +96,9 @@ Processing takes about twenty seconds while you switch windows. The original vid
 
 ---
 
-## What you get
+## Output
 
-A markdown file your agent reads, with your narration attached to the screen that was on at the time:
+A markdown file, your narration attached to the screen that was up when you said it:
 
 ```markdown
 ## 00:34 · f11 — `frames/f11.jpg`
@@ -105,7 +106,7 @@ A markdown file your agent reads, with your narration attached to the screen tha
            instead of scrolling the whole sheet"
 ```
 
-Plus the frames themselves. A 107-second session came out at about 600 tokens.
+Plus the frames. That whole session was about 600 tokens.
 
 ---
 

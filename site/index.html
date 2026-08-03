@@ -104,6 +104,11 @@
     margin-top: 20px; font-size: 19px; color: var(--dim);
     max-width: 33rem; letter-spacing: -.011em;
   }
+  .stat {
+    margin-top: 18px; font-size: 15px; color: var(--faint); max-width: 34rem;
+    border-left: 2px solid var(--accent-dim); padding-left: 14px;
+  }
+  .stat b { color: var(--ink); font-weight: 550; }
 
   ol.run { list-style: none; margin-top: 32px; display: grid; gap: 18px; }
   ol.run li { display: flex; gap: 14px; align-items: flex-start; }
@@ -228,10 +233,14 @@
 
   <section class="hero">
     <div class="chip"><span class="dot"></span> runs entirely on your machine</div>
-    <h1>Talk while you use your app.<br><span class="g">Your agent listens.</span></h1>
+    <h1>An automated feedback loop<br><span class="g">for any app.</span></h1>
     <p class="sub">
-      Record. Say what's wrong out loud. AirDrop it over. Claude Code gets the frames
-      you saw and the words you said — aligned.
+      Test on your phone. Say what's wrong while you're looking at it. Your coding agent
+      gets the screens and your words together.
+    </p>
+    <p class="stat">
+      One <b>107-second</b> recording turned into <b>five concrete issues</b> in about
+      <b>twenty seconds</b> of processing. No screenshots, nothing written down.
     </p>
 
     <ol class="run">
@@ -334,7 +343,7 @@
   </section>
 
   <section class="setup">
-    <h2>What your agent reads</h2>
+    <h2>Output</h2>
     <div class="term">
     <div class="top"><i></i><i></i><i></i><span>session.md</span></div>
 <pre><span class="c">## 00:34 · f11 — frames/f11.jpg</span>
