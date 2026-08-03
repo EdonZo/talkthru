@@ -258,8 +258,8 @@
       <li>
         <span class="n">3</span>
         <div class="body">
-          <p class="lbl">Record on your phone and talk. AirDrop it over.</p>
-          <p class="hint">Screen recorder with the mic on — setup below. Nothing goes in your app.</p>
+          <p class="lbl">Record your app and talk. AirDrop it over.</p>
+          <p class="hint">Phone setup is below. Nothing goes in your app.</p>
         </div>
       </li>
       <li>
@@ -280,11 +280,7 @@
   <section class="setup">
     <h2>Prerequisites — once, on your Mac</h2>
 <pre>npx talkthru doctor <span class="m">--fix</span></pre>
-    <p class="after">
-      Installs ffmpeg and whisper.cpp via Homebrew if they're missing, and downloads the
-      speech model. They're native binaries rather than npm packages — bundling them would
-      cost ~100&nbsp;MB and lose the hardware acceleration that makes transcription fast.
-    </p>
+    <p class="after">Installs ffmpeg and whisper.cpp, and downloads the speech model.</p>
   </section>
 
   <section class="setup">

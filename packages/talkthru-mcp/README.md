@@ -12,40 +12,29 @@ you:    *taps around* "this quest card sits on top of the sun, it washes out"
 Claude: reads that exact frame, sees the card against the glow, fixes the component.
 ```
 
-Everything runs on your machine. No accounts, no uploads, no API keys.
+Runs entirely on your machine. No accounts, no uploads, no API keys.
 
-Tested on macOS with an iPhone. Anything that produces a video with sound should work — point the watcher at a folder.
+Tested on macOS with an iPhone. Any video with sound works — point the watcher at a folder.
 
 ---
 
-## Setup
-
-Once, about two minutes.
-
-**1. Install**
+## Install
 
 ```bash
 npx talkthru doctor --fix
-```
-
-That installs `ffmpeg` and `whisper.cpp` through Homebrew if you don't have them, then
-downloads the speech model. Both are native binaries, not npm packages — vendoring them
-would add ~100 MB to the install and give up the hardware acceleration (Metal, on Apple
-silicon) that makes transcription faster than real time.
-
-**2. Tell Claude Code about it**
-
-```bash
 claude mcp add --scope user talkthru -- npx talkthru-mcp
 ```
 
-Restart any Claude Code session that's already open — it only picks up new servers on startup. Type `/mcp` and you should see `talkthru` in the list.
+First command installs `ffmpeg` + `whisper.cpp` and downloads the speech model. Second
+tells Claude Code where to find your sessions — restart Claude Code afterwards so it picks
+it up.
 
-**3. Turn on screen recording on your phone**
+---
 
-Open Control Centre (swipe down from the top-right) and tap **+** → **Add a Control** →
-search *screen* → **Screen Recording**. Then press and hold the new ◉ button and switch
-the **Microphone on**. It sticks — you only do this once.
+## Set up your phone
+
+Once. Control Centre → **+** → **Add a Control** → **Screen Recording**. Then press and
+hold it and turn the **microphone on**.
 
 <table>
 <tr>
@@ -72,31 +61,30 @@ the **Microphone on**. It sticks — you only do this once.
 
 ---
 
-## Using it
+## Use it
 
-Start the watcher and leave it running:
+Leave this running:
 
 ```bash
 talkthru watch
 ```
 
-It only touches files that look like screen recordings. The rest of your Downloads folder is invisible to it.
+Then:
 
-Then, whenever you want to give feedback:
+1. Record your app, talk as you go
+2. AirDrop the video to your Mac
+3. Ask Claude Code: **"check the feedback in my last talkthru session and implement it"**
 
-1. Hit record on your phone, use your app, say what you think as you go
-2. Stop, AirDrop the video to your Mac
-3. In Claude Code: **"check the feedback in my last talkthru session and implement it"**
+Ready in about twenty seconds. Your original video is kept in `~/.talkthru/archive/`.
 
-Processing takes about twenty seconds while you switch windows. The original video moves to `~/.talkthru/archive/` — it is never deleted.
-
-**One tip that matters:** if your app talks — text to speech, narration, sound effects with speech — mute it before recording. Otherwise your app's voice and yours end up in the same track and whisper can't tell you apart.
+**Mute your app if it talks.** Its narration lands in the transcript next to yours and
+whisper can't tell you apart.
 
 ---
 
 ## Output
 
-A markdown file, your narration attached to the screen that was up when you said it:
+Your words, attached to the screen that was up when you said them:
 
 ```markdown
 ## 00:34 · f11 — `frames/f11.jpg`
@@ -104,7 +92,7 @@ A markdown file, your narration attached to the screen that was up when you said
            instead of scrolling the whole sheet"
 ```
 
-Plus the frames. That whole session was about 600 tokens.
+Plus the frames. A two-minute session is about 600 tokens.
 
 ---
 
@@ -112,22 +100,22 @@ Plus the frames. That whole session was about 600 tokens.
 
 ```bash
 talkthru watch                  # watch ~/Downloads for screen recordings
-talkthru watch ~/some-folder    # watch a folder of your own, any video
-talkthru process video.mp4      # process one file by hand
+talkthru watch ~/some-folder    # watch your own folder, any video
+talkthru process video.mp4      # process one file
 talkthru list                   # recent sessions
-talkthru show latest            # read one in the terminal
-talkthru doctor                 # what's missing
+talkthru show latest            # print one
+talkthru doctor                 # check the setup
 talkthru prune                  # delete old sessions
 ```
 
-`tt` is a shorthand for `talkthru`.
+`tt` also works.
 
 ---
 
 ## How it works
 
-`ffmpeg` finds the moments your screen actually changed and pulls those frames. Speech regions come from real silence in the audio, and `whisper.cpp` transcribes each one locally — so a sentence lands on the screen you were looking at when you said it, not on whatever appeared mid-sentence. An MCP server hands the result to Claude Code.
+`ffmpeg` pulls the frames where your screen actually changed. `whisper.cpp` transcribes
+your voice locally, split on the real silence between sentences, so each thing you said
+lands on the screen you were looking at. An MCP server hands it to Claude Code.
 
-Node 20.11+, `ffmpeg` and `whisper.cpp`.
-
-MIT.
+Needs Node 20.11+.
