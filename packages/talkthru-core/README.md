@@ -7,9 +7,10 @@ while you use it. Send it to your machine and your coding agent gets everything 
 said, attached to the screen you were looking at when you said it.
 
 ```
-you:    *taps around* "this quest card sits on top of the sun, it washes out"
+you:    *tapping through checkout* "this button is too small, I keep missing it"
+                                  "and this error doesn't say what went wrong"
 
-Claude: reads that exact frame, sees the card against the glow, fixes the component.
+Claude: sees both screens, finds both components, fixes them.
 ```
 
 Runs entirely on your machine. No accounts, no uploads, no API keys.
@@ -88,8 +89,10 @@ Your words, attached to the screen that was up when you said them:
 
 ```markdown
 ## 00:34 · f11 — `frames/f11.jpg`
-- [00:39] "the settings here is a bit off, you have to scroll down
-           instead of scrolling the whole sheet"
+- [00:39] "this button is too small, I keep missing it"
+
+## 00:52 · f13 — `frames/f13.jpg`
+- [00:55] "and this error doesn't say what actually went wrong"
 ```
 
 Plus the frames. A two-minute session is about 600 tokens.
@@ -119,3 +122,12 @@ your voice locally, split on the real silence between sentences, so each thing y
 lands on the screen you were looking at. An MCP server hands it to Claude Code.
 
 Needs Node 20.11+.
+
+---
+
+## Why
+
+I built this because I test my own app on my phone every day and kept losing the feedback
+on the way back to my editor — screenshotting, cropping, trying to describe which screen I
+meant. Now I just record, talk, and Claude Code picks it up. Sharing it in case it saves
+you the same trip.
