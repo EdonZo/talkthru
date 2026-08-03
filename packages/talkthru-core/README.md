@@ -3,7 +3,7 @@
 **[talkthru.dev](https://talkthru.dev)** · [npm](https://www.npmjs.com/package/talkthru) · MIT
 
 **An automated feedback loop for any app.** Screen-record your app on your phone and talk
-while you use it. Send the recording to your Mac and your coding agent gets everything you
+while you use it. Send it to your machine and your coding agent gets everything you
 said, attached to the screen you were looking at when you said it.
 
 ```
@@ -72,7 +72,7 @@ talkthru watch
 Then:
 
 1. Record your app, talk as you go
-2. AirDrop the video to your Mac
+2. Get the video onto your machine (AirDrop is easiest)
 3. Ask Claude Code: **"check the feedback in my last talkthru session and implement it"**
 
 Ready in about twenty seconds. Your original video is kept in `~/.talkthru/archive/`.
