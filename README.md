@@ -2,11 +2,9 @@
 
 **[talkthru.dev](https://talkthru.dev)** · [npm](https://www.npmjs.com/package/talkthru) · MIT
 
-An automated feedback loop for any app. Test on your phone, say what's wrong while you're
-looking at it, and your coding agent gets the screens and your words together.
-
-One 107-second recording turned into five concrete issues in about twenty seconds of
-processing. No screenshots, no writing anything down.
+**An automated feedback loop for any app.** Screen-record your app on your phone and talk
+while you use it. Send the recording to your Mac and your coding agent gets everything you
+said, attached to the screen you were looking at when you said it.
 
 ```
 you:    *taps around* "this quest card sits on top of the sun, it washes out"
