@@ -190,6 +190,24 @@ async function cmdWatch(cfg: TalkthruConfig, args: Args): Promise<void> {
   else if (args.flags.get('screen-recordings') === true) pattern = SCREEN_RECORDING_PATTERN;
   else pattern = explicitDir ? null : SCREEN_RECORDING_PATTERN;
 
+  // Check the tools BEFORE watching. Otherwise the first sign that ffmpeg is
+  // missing is a failed recording — after someone has already set up their
+  // phone, recorded, and sent the file over.
+  const checks = await runDoctor(cfg);
+  const broken = checks.filter((c) => !c.ok);
+  if (broken.length > 0) {
+    out('talkthru is not ready yet:');
+    out('');
+    for (const c of broken) {
+      out(`  missing: ${c.name} — ${c.detail}`);
+      if (c.hint) out(`           ${c.hint}`);
+    }
+    out('');
+    out('Run `talkthru doctor --fix` and try again.');
+    process.exitCode = 1;
+    return;
+  }
+
   const controller = new AbortController();
 
   const stop = (): void => {

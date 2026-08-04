@@ -162,7 +162,7 @@ async function checkWhisper(cfg: TalkthruConfig, fix: boolean): Promise<CheckRes
       name: 'model',
       ok: false,
       detail: `${cfg.whisperModel} not downloaded`,
-      hint: 'Run `talkthru doctor --fix` to download it (~150 MB, one time).',
+      hint: 'Run `talkthru doctor --fix` to download it (~490 MB, one time).',
     });
   }
   return out;

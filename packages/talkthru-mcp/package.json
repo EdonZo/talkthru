@@ -1,6 +1,6 @@
 {
   "name": "talkthru-mcp",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "MCP server that hands talkthru sessions (screens + narration) to Claude Code.",
   "license": "MIT",
   "type": "module",
@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",
-    "talkthru": "0.1.1"
+    "talkthru": "0.1.2"
   },
   "keywords": [
     "mcp",

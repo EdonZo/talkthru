@@ -1,6 +1,6 @@
 {
   "name": "talkthru",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Talk while you use your app; your coding agent gets the screens you saw and the words you said, lined up. Runs entirely on your machine.",
   "license": "MIT",
   "type": "module",
