@@ -22,13 +22,11 @@ Tested on macOS with an iPhone. Any video with sound works — point the watcher
 ## Install
 
 ```bash
-npx talkthru doctor --fix
 claude mcp add --scope user talkthru -- npx talkthru-mcp
 ```
 
-First command installs `ffmpeg` + `whisper.cpp` and downloads the speech model. Second
-tells Claude Code where to find your sessions — restart Claude Code afterwards so it picks
-it up.
+Restart Claude Code afterwards so it picks up the server. That's it — `ffmpeg`,
+`whisper.cpp` and the speech model install themselves the first time you run `talkthru`.
 
 ---
 

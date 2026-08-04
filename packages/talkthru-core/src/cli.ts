@@ -150,6 +150,7 @@ async function cmdServe(cfg: TalkthruConfig, args: Args): Promise<void> {
 async function cmdProcess(cfg: TalkthruConfig, args: Args): Promise<void> {
   const [first, ...others] = args.positionals;
   if (!first) throw new Error('Give a media file or a session id.');
+  if (!(await ensureReady(cfg))) return;
 
   let id: string;
   if (isValidSessionId(first)) {
@@ -167,6 +168,40 @@ async function cmdProcess(cfg: TalkthruConfig, args: Args): Promise<void> {
   out(`ready: ${markdownPath(cfg, id)}`);
   out(`  ${result.bundle.keyframes.length} frames · ${result.bundle.timeline.length} timeline entries · ~${result.bundle.estimatedTokens} tokens`);
   for (const w of result.warnings) out(`  warning: ${w}`);
+}
+
+
+/**
+ * Make sure the tools are present, installing them if they are not.
+ *
+ * Nobody should have to run a second command to make the first one work. The
+ * speech model already downloads itself on first use; ffmpeg and whisper.cpp
+ * now do the same, so `talkthru watch` on a clean machine just works.
+ *
+ * Returns false when something could not be installed, having already
+ * explained what and why.
+ */
+async function ensureReady(cfg: TalkthruConfig): Promise<boolean> {
+  const missing = (await runDoctor(cfg)).filter((c) => !c.ok);
+  if (missing.length === 0) return true;
+
+  out(`first run: setting up ${missing.map((c) => c.name).join(', ')}`);
+  out('');
+  const after = (await runDoctor(cfg, { fix: true })).filter((c) => !c.ok);
+  if (after.length === 0) {
+    out('ready.');
+    out('');
+    return true;
+  }
+
+  out('');
+  out("talkthru could not finish setting itself up:");
+  for (const c of after) {
+    out(`  ${c.name} — ${c.detail}`);
+    if (c.hint) out(`     ${c.hint}`);
+  }
+  process.exitCode = 1;
+  return false;
 }
 
 async function cmdWatch(cfg: TalkthruConfig, args: Args): Promise<void> {
@@ -190,23 +225,7 @@ async function cmdWatch(cfg: TalkthruConfig, args: Args): Promise<void> {
   else if (args.flags.get('screen-recordings') === true) pattern = SCREEN_RECORDING_PATTERN;
   else pattern = explicitDir ? null : SCREEN_RECORDING_PATTERN;
 
-  // Check the tools BEFORE watching. Otherwise the first sign that ffmpeg is
-  // missing is a failed recording — after someone has already set up their
-  // phone, recorded, and sent the file over.
-  const checks = await runDoctor(cfg);
-  const broken = checks.filter((c) => !c.ok);
-  if (broken.length > 0) {
-    out('talkthru is not ready yet:');
-    out('');
-    for (const c of broken) {
-      out(`  missing: ${c.name} — ${c.detail}`);
-      if (c.hint) out(`           ${c.hint}`);
-    }
-    out('');
-    out('Run `talkthru doctor --fix` and try again.');
-    process.exitCode = 1;
-    return;
-  }
+  if (!(await ensureReady(cfg))) return;
 
   const controller = new AbortController();
 
