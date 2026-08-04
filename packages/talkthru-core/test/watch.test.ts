@@ -1,7 +1,9 @@
 import fs from 'node:fs/promises';
+import { getEventListeners } from 'node:events';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
+  watchDirectory,
   FileStabilityTracker,
   SCREEN_RECORDING_PATTERN,
   archiveFile,
@@ -348,5 +350,35 @@ describe('watchTick', () => {
     // Now it has settled.
     await watchTick(cfg, tracker, opts, 3_000);
     expect(await watchTick(cfg, tracker, opts, 6_000)).toHaveLength(1);
+  });
+});
+
+describe('watchDirectory', () => {
+  /**
+   * REGRESSION: the poll loop attached an abort listener per iteration and only
+   * detached it if the signal actually fired, so a watcher left running all day
+   * leaked one listener a second. Node warned after eleven.
+   */
+  it('does not accumulate abort listeners while polling', async () => {
+    const controller = new AbortController();
+    const loop = watchDirectory(cfg, {
+      dir: watchDir,
+      archiveDir,
+      pattern: null,
+      pollMs: 5,
+      stableMs: 0,
+      minBytes: 0,
+      signal: controller.signal,
+      processFn: async () => {
+        throw new Error('should never run — the folder is empty');
+      },
+    });
+
+    await new Promise((r) => setTimeout(r, 120)); // ~20 polls
+    const listeners = getEventListeners(controller.signal, 'abort').length;
+    controller.abort();
+    await loop;
+
+    expect(listeners).toBeLessThanOrEqual(2);
   });
 });

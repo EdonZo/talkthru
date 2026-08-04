@@ -333,16 +333,22 @@ export async function watchDirectory(cfg: TalkthruConfig, opts: WatchOptions = {
       log.error('watch: poll failed', { error: String(e) });
     }
     if (opts.signal?.aborted) break;
+    // Sleep until the next poll, waking early if we are aborted.
+    //
+    // The abort listener MUST be removed when the timer wins, not just when it
+    // fires: `{ once: true }` only detaches on firing, so a long-running
+    // watcher accumulated one listener per second and Node started warning
+    // about a leak after eleven polls.
     await new Promise<void>((resolve) => {
-      const timer = setTimeout(resolve, pollMs);
-      opts.signal?.addEventListener(
-        'abort',
-        () => {
-          clearTimeout(timer);
-          resolve();
-        },
-        { once: true },
-      );
+      const signal = opts.signal;
+      let timer: ReturnType<typeof setTimeout>;
+      const done = (): void => {
+        clearTimeout(timer);
+        signal?.removeEventListener('abort', done);
+        resolve();
+      };
+      timer = setTimeout(done, pollMs);
+      signal?.addEventListener('abort', done, { once: true });
     });
   }
 }
