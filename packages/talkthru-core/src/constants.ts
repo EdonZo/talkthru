@@ -111,6 +111,24 @@ export const TRANSCRIBE = {
   TIMEOUT_MS: 30 * 60_000,
   /** Threads passed to whisper-cli; 0 lets it choose. */
   THREADS: 0,
+  /**
+   * Below this mean level the track holds no voice at all, dBFS. iOS always
+   * writes an audio track, so "has audio" is not "has your voice": with the mic
+   * off you get app audio, which for a quiet app is digital silence (-91 dB).
+   */
+  SILENCE_MEAN_DB: -60,
+  /**
+   * Quieter than this and we normalise before doing anything else, dBFS.
+   *
+   * WHY: an iPad on a stand records your voice around -56 dB. The silence
+   * detector's threshold is absolute, so at that level it called an 85-second
+   * recording of continuous speech "silent" apart from three 0.3s blips, and
+   * the transcript came back empty. Normalising first lifts it to about -21 dB,
+   * where detection behaves and whisper hears the whole thing.
+   */
+  QUIET_MEAN_DB: -30,
+  /** Target for normalisation, LUFS — broadcast-ish, safe for speech. */
+  LOUDNORM_TARGET_LUFS: -16,
 } as const;
 
 export const ALIGN = {

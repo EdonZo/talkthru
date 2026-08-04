@@ -309,7 +309,7 @@ export async function extractAudioWav(
   tools: FfmpegTools,
   file: string,
   outPath: string,
-  opts: { signal?: AbortSignal } = {},
+  opts: { signal?: AbortSignal; normalise?: boolean } = {},
 ): Promise<void> {
   await fs.mkdir(path.dirname(outPath), { recursive: true });
   await run(
@@ -321,6 +321,11 @@ export async function extractAudioWav(
       '-vn',
       '-ac', String(TRANSCRIBE.CHANNELS),
       '-ar', String(TRANSCRIBE.SAMPLE_RATE),
+      // Lift a faint recording to a normal speaking level. Without this a
+      // phone on a stand transcribes as silence.
+      ...(opts.normalise
+        ? ['-af', `loudnorm=I=${TRANSCRIBE.LOUDNORM_TARGET_LUFS}:TP=-1.5:LRA=11`]
+        : []),
       '-c:a', 'pcm_s16le',
       '-y',
       outPath,
@@ -356,6 +361,28 @@ export async function framesToVideo(
     ],
     { signal: opts.signal },
   );
+}
+
+/**
+ * Mean volume of a track in dBFS, or null if ffmpeg did not report one.
+ * Used to tell "the microphone was off" apart from "nobody spoke".
+ */
+export async function meanVolumeDb(
+  tools: FfmpegTools,
+  file: string,
+  opts: { signal?: AbortSignal } = {},
+): Promise<number | null> {
+  try {
+    const res = await run(
+      tools.ffmpeg,
+      ['-nostdin', '-i', file, '-af', 'volumedetect', '-f', 'null', '-'],
+      { ...(opts.signal ? { signal: opts.signal } : {}), timeoutMs: 120_000 },
+    );
+    const match = /mean_volume:\s*(-?[\d.]+) dB/.exec(res.stderr);
+    return match?.[1] !== undefined ? Number(match[1]) : null;
+  } catch {
+    return null;
+  }
 }
 
 export async function ffmpegVersion(tools: FfmpegTools): Promise<string> {
