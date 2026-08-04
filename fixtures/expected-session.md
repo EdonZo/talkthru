@@ -27,3 +27,6 @@ ui: header#app-header "AstroShort" @40,60 400x90
 occluded: system alert — not visible in this frame
 ui: div#error-banner "Could not load" @100,400 280x120
 - [00:52] "and this error state, the yellow is far too bright."
+
+## Warnings
+- The audio track is silent (-91 dB) — the microphone was off. In Control Centre, press and hold the Screen Recording button and switch the Microphone on, then record again.
