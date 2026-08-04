@@ -180,7 +180,9 @@ describe('degraded inputs', () => {
     // One entry per frame, no text — still a useful visual walkthrough.
     expect(bundle.timeline).toHaveLength(6);
     expect(bundle.timeline.every((t) => t.utterance === '')).toBe(true);
-    expect(warnings.join(' ')).toMatch(/no speech was recognised/i);
+    // The fixture's audio track is synthetic silence, so the bundle should say
+    // the microphone was off rather than the vaguer "no speech recognised".
+    expect(warnings.join(' ')).toMatch(/microphone was off/i);
   });
 
   it('handles a video with no audio track at all', async () => {

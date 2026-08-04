@@ -1,8 +1,8 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { BUNDLE, KEYFRAMES } from './constants.js';
+import { BUNDLE, KEYFRAMES, TRANSCRIBE } from './constants.js';
 import { TalkthruError, ErrorCodes, toTalkthruError } from './errors.js';
-import { extractAudioWav, framesToVideo, probeMedia, resolveFfmpeg, type FfmpegTools } from './ffmpeg.js';
+import { extractAudioWav, framesToVideo, meanVolumeDb, probeMedia, resolveFfmpeg, type FfmpegTools } from './ffmpeg.js';
 import { extractKeyframes } from './keyframes.js';
 import { buildTimeline, segmentUtterances, timelineFromFramesOnly } from './align.js';
 import { normaliseSnapshots } from './uiContext.js';
@@ -175,6 +175,7 @@ export async function processSession(
   /* -------------------------------- audio -------------------------------- */
   await patchStatus(cfg, id, { stage: 'audio' });
   let wavPath: string | null = null;
+  let silentAudio = false;
   if (!opts.noAudio) {
     const audioSource = audioInfo?.path ?? (media?.hasAudio ? media.path : null);
     if (!audioSource) {
@@ -184,6 +185,34 @@ export async function processSession(
       try {
         await extractAudioWav(tools, audioSource, target, opts.signal ? { signal: opts.signal } : {});
         wavPath = target;
+
+        // "Has an audio track" is not "has your voice". iOS always writes one;
+        // with the mic off it holds app audio, which for a quiet app is
+        // silence. Say so plainly rather than reporting "no speech found".
+        const meanDb = await meanVolumeDb(tools, target, opts.signal ? { signal: opts.signal } : {});
+        if (meanDb !== null && meanDb < TRANSCRIBE.SILENCE_MEAN_DB) {
+          silentAudio = true;
+          warnings.push(
+            `The audio track is silent (${meanDb.toFixed(0)} dB) — the microphone was off. ` +
+              'In Control Centre, press and hold the Screen Recording button and switch the ' +
+              'Microphone on, then record again.',
+          );
+        } else if (meanDb !== null && meanDb < TRANSCRIBE.QUIET_MEAN_DB) {
+          // Faint but real — a phone on a stand across the room. Left alone,
+          // the silence detector's absolute threshold treats nearly all of it
+          // as silence: an 85-second recording of continuous speech yielded
+          // three 0.3s fragments and an empty transcript. Normalising first
+          // lifts it to a normal speaking level and the whole thing comes back.
+          log.info(`audio is quiet (${meanDb.toFixed(0)} dB); normalising before transcription`);
+          await extractAudioWav(tools, audioSource, target, {
+            ...(opts.signal ? { signal: opts.signal } : {}),
+            normalise: true,
+          });
+          warnings.push(
+            `The recording was quiet (${meanDb.toFixed(0)} dB) so it was amplified before ` +
+              'transcription. Holding the phone closer will improve accuracy.',
+          );
+        }
       } catch (e) {
         warnings.push('Could not decode the audio track; the bundle has frames only.');
         log.warn('audio extraction failed', { error: String(e) });
@@ -221,7 +250,7 @@ export async function processSession(
         ...(opts.signal ? { signal: opts.signal } : {}),
         ...(opts.useVad === undefined ? {} : { useVad: opts.useVad }),
       });
-      if (transcript.words.length === 0) {
+      if (transcript.words.length === 0 && !silentAudio) {
         warnings.push('Audio was captured but no speech was recognised.');
       }
     } catch (e) {
