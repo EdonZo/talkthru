@@ -8,6 +8,8 @@
  * sessions" — points nowhere near the cause.
  */
 import fs from 'node:fs/promises';
+import { realpathSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
@@ -308,8 +310,25 @@ async function main(): Promise<void> {
 }
 
 // Only auto-start when executed directly, so tests can import createServer.
-const invokedDirectly = process.argv[1] !== undefined && import.meta.url.endsWith(path.basename(process.argv[1]));
-if (invokedDirectly) {
+/**
+ * Are we the process entry point, rather than being imported by a test?
+ *
+ * Compare real paths, not basenames. npm installs this as a bin shim called
+ * `talkthru-mcp` that symlinks to `dist/server.js`, so comparing names meant
+ * `npx talkthru-mcp` never matched and the server exited silently — the exact
+ * command in the README did nothing at all.
+ */
+function isEntryPoint(): boolean {
+  const argv1 = process.argv[1];
+  if (!argv1) return false;
+  try {
+    return realpathSync(argv1) === realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return false;
+  }
+}
+
+if (isEntryPoint()) {
   main().catch((e) => {
     process.stderr.write(`[talkthru-mcp] fatal: ${e instanceof Error ? e.message : String(e)}\n`);
     process.exit(1);

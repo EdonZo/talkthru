@@ -116,6 +116,32 @@ async function connect(): Promise<Client> {
 }
 
 describe('MCP handshake', () => {
+  /**
+   * REGRESSION: every other test here runs `node dist/server.js`, which is not
+   * how anyone actually starts this. npm installs a bin shim named
+   * `talkthru-mcp` that symlinks to it, and the entry-point check used to
+   * compare basenames — so `npx talkthru-mcp` exited silently with no output
+   * while the whole suite stayed green.
+   */
+  it('starts when invoked through a bin shim, not just as server.js', async () => {
+    const shimDir = await fs.mkdtemp(path.join(os.tmpdir(), 'talkthru-shim-'));
+    const shim = path.join(shimDir, 'talkthru-mcp');
+    await fs.symlink(SERVER_ENTRY, shim);
+    try {
+      transport = new StdioClientTransport({
+        command: process.execPath,
+        args: [shim],
+        env: { ...process.env, TALKTHRU_HOME: home, TALKTHRU_LOG: 'silent' } as Record<string, string>,
+      });
+      client = new Client({ name: 'shim-test', version: '1.0.0' });
+      await client.connect(transport);
+      const { tools } = await client.listTools();
+      expect(tools.length).toBeGreaterThan(0);
+    } finally {
+      await fs.rm(shimDir, { recursive: true, force: true });
+    }
+  });
+
   it('completes initialize and advertises the four tools', async () => {
     const c = await connect();
     const { tools } = await c.listTools();
