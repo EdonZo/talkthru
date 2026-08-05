@@ -392,5 +392,20 @@
     });
   }
 </script>
+<script type="module">
+  // Firebase Analytics (GA4). The apiKey here is a public client identifier,
+  // not a secret — access is restricted by authorised domain in the console.
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-analytics.js";
+  getAnalytics(initializeApp({
+    apiKey: "AIzaSyDJV9hB1xKODVw7h8ul32OEXzP41hd8D2A",
+    authDomain: "talkthru-9b7ab.firebaseapp.com",
+    projectId: "talkthru-9b7ab",
+    storageBucket: "talkthru-9b7ab.firebasestorage.app",
+    messagingSenderId: "547773592630",
+    appId: "1:547773592630:web:80e9458e84549d6a109497",
+    measurementId: "G-ZTYNLM7PRW"
+  }));
+</script>
 </body>
 </html>
