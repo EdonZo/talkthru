@@ -10,7 +10,7 @@ said, attached to the screen you were looking at when you said it.
 you:    *tapping through checkout* "this button is too small, I keep missing it"
                                   "and this error doesn't say what went wrong"
 
-Claude: sees both screens, finds both components, fixes them.
+agent:  sees both screens, finds both components, fixes them.
 ```
 
 Runs entirely on your machine. No accounts, no uploads, no API keys.
@@ -22,11 +22,45 @@ Tested on macOS with an iPhone. Any video with sound works — point the watcher
 ## Install
 
 ```bash
+npx talkthru doctor --fix
+```
+
+Pulls `ffmpeg`, `whisper.cpp` and the speech model. Nothing else to set up.
+
+## Start the watcher
+
+```bash
+npx talkthru watch
+```
+
+Leave it running. It only touches files named like a screen recording — the rest of your
+Downloads folder is invisible to it.
+
+## Connect your agent
+
+talkthru is an MCP server, so any MCP client works — Cursor, Windsurf, Cline, Zed,
+Claude Desktop. Add it to your client's config:
+
+```json
+{
+  "mcpServers": {
+    "talkthru": {
+      "command": "npx",
+      "args": ["talkthru-mcp"]
+    }
+  }
+}
+```
+
+Claude Code has a one-liner for the same thing:
+
+```bash
 claude mcp add --scope user talkthru -- npx talkthru-mcp
 ```
 
-Restart Claude Code afterwards so it picks up the server. That's it — `ffmpeg`,
-`whisper.cpp` and the speech model install themselves the first time you run `talkthru`.
+Restart your client afterwards so it picks up the server.
+
+Built and tested against Claude Code. Other MCP clients should work — tell me if yours doesn't.
 
 ---
 
@@ -62,17 +96,9 @@ hold it and turn the **microphone on**.
 
 ## Use it
 
-Leave this running:
-
-```bash
-talkthru watch
-```
-
-Then:
-
 1. Record your app, talk as you go
 2. Get the video onto your machine (AirDrop is easiest)
-3. Ask Claude Code: **"check the feedback in my last talkthru session and implement it"**
+3. Ask your agent: **"check the feedback in my last talkthru session and implement it"**
 
 Ready in about twenty seconds. Your original video is kept in `~/.talkthru/archive/`.
 
@@ -117,7 +143,7 @@ talkthru prune                  # delete old sessions
 
 `ffmpeg` pulls the frames where your screen actually changed. `whisper.cpp` transcribes
 your voice locally, split on the real silence between sentences, so each thing you said
-lands on the screen you were looking at. An MCP server hands it to Claude Code.
+lands on the screen you were looking at. An MCP server hands it to your agent.
 
 Needs Node 20.11+.
 

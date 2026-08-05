@@ -106,9 +106,12 @@
   }
   .stat {
     margin-top: 18px; font-size: 15px; color: var(--faint); max-width: 34rem;
-    border-left: 2px solid var(--accent-dim); padding-left: 14px;
+    border-left: 2px solid rgba(100,224,180,.22); padding-left: 14px;
   }
   .stat b { color: var(--ink); font-weight: 550; }
+
+  .demo { margin-top: 34px; border: 1px solid var(--line); border-radius: 11px; overflow: hidden; background: #000; }
+  .demo video { display: block; width: 100%; height: auto; }
 
   ol.run { list-style: none; margin-top: 32px; display: grid; gap: 18px; }
   ol.run li { display: flex; gap: 14px; align-items: flex-start; }
@@ -120,8 +123,13 @@
   }
   ol.run .body { flex: 1; min-width: 0; }
   ol.run .lbl { font-size: 15px; color: var(--ink); margin-bottom: 8px; letter-spacing: -.01em; }
-  ol.run .hint { font-size: 13.5px; color: var(--faint); }
+  ol.run .hint { font-size: 13.5px; color: var(--faint); margin-top: 8px; }
+  .once { font-family: var(--mono); font-size: 11px; color: var(--faint);
+    border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px; margin-left: 6px; }
   ol.run .cmd { margin-top: 0; max-width: none; }
+  code.cfg { font-family: var(--mono); font-size: 13px; color: var(--dim); flex: 1; }
+  code.inl { font-family: var(--mono); font-size: 12px; color: var(--dim);
+    background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; }
   .ask {
     background: rgba(100,224,180,.06); border: 1px solid rgba(100,224,180,.22);
     border-radius: 9px; padding: 12px 15px; font-size: 14.5px; color: var(--mint);
@@ -241,32 +249,37 @@
       looking at when you said it.
     </p>
 
+
+    <div class="demo">
+      <video controls preload="none" poster="video/poster.jpg" playsinline>
+        <source src="video/demo.mp4" type="video/mp4">
+      </video>
+    </div>
+
     <ol class="run">
       <li>
         <span class="n">1</span>
         <div class="body">
-          <p class="lbl">Watch for recordings</p>
+          <p class="lbl">Leave this running</p>
           <div class="cmd"><span class="p">$</span><code>npx talkthru watch</code><button onclick="cp(this)">Copy</button></div>
+          <p class="hint">First run pulls ffmpeg, whisper.cpp and the speech model on its own.</p>
         </div>
       </li>
       <li>
         <span class="n">2</span>
         <div class="body">
-          <p class="lbl">Tell Claude Code about it</p>
-          <div class="cmd"><span class="p">$</span><code>claude mcp add --scope user talkthru -- npx talkthru-mcp</code><button onclick="cp(this)">Copy</button></div>
+          <p class="lbl">Connect your agent <span class="once">once</span></p>
+          <p class="hint">talkthru is an MCP server, so any MCP client works — Cursor, Windsurf,
+          Cline, Zed, Claude Desktop:</p>
+          <div class="cmd"><code class="cfg">{ "talkthru": { "command": "npx", "args": ["talkthru-mcp"] } }</code></div>
+          <p class="hint">Claude Code has a shortcut:
+          <code class="inl">claude mcp add --scope user talkthru -- npx talkthru-mcp</code></p>
         </div>
       </li>
       <li>
         <span class="n">3</span>
         <div class="body">
           <p class="lbl">Record your app and talk. Send it over.</p>
-          <p class="hint">Phone setup is below. Nothing goes in your app.</p>
-        </div>
-      </li>
-      <li>
-        <span class="n">4</span>
-        <div class="body">
-          <p class="lbl">Ask Claude</p>
           <div class="ask">“check the feedback in my last talkthru session and implement it”</div>
         </div>
       </li>
@@ -357,7 +370,7 @@
     <p class="why">
       I built this because I test my own app on my phone every day and kept losing the
       feedback on the way back to my editor — screenshotting, cropping, trying to describe
-      which screen I meant. Now I just record, talk, and Claude Code picks it up. Sharing
+      which screen I meant. Now I just record, talk, and my agent picks it up. Sharing
       it in case it saves you the same trip.
     </p>
   </section>
