@@ -17,6 +17,11 @@ Runs entirely on your machine. No accounts, no uploads, no API keys.
 
 Tested on macOS with an iPhone. Any video with sound works — point the watcher at a folder.
 
+[![Watch the 70-second demo](https://img.youtube.com/vi/A1CJRWSLq7o/maxresdefault.jpg)](https://youtu.be/A1CJRWSLq7o)
+
+*70-second demo — install, record, and the agent picking it up.*
+
+
 ---
 
 ## Install
