@@ -15,7 +15,7 @@ agent:  sees both screens, finds both components, fixes them.
 
 Runs entirely on your machine. No accounts, no uploads, no API keys.
 
-Tested on macOS with an iPhone. Any video with sound works — point the watcher at a folder.
+Works with a mac screen recording (⌘⇧5) or an iPhone one over AirDrop. Any video with sound works — point the watcher at a folder.
 
 [![Watch the 70-second demo](https://img.youtube.com/vi/3BimSScnGOg/maxresdefault.jpg)](https://youtu.be/3BimSScnGOg)
 
@@ -69,7 +69,42 @@ Built and tested against Claude Code. Other MCP clients should work — tell me 
 
 ---
 
+## Set up your mac
+
+Once. Press **⌘⇧5**, pick a **record** mode (the icons with the ◉ dot), then open
+**Options** and set **Save to → Downloads** and your **Microphone**. Both stick.
+
+<table>
+<tr>
+<td colspan="2"><img src="https://raw.githubusercontent.com/EdonZo/talkthru/main/site/img/web/mac-1-record-mode.png" alt="Screenshot toolbar with a record mode selected and Options highlighted"></td>
+</tr>
+<tr>
+<td colspan="2"><b>1&nbsp;·&nbsp;2.</b> press <b>⌘⇧5</b>, pick a record mode, open <b>Options</b></td>
+</tr>
+<tr>
+<td width="50%"><img src="https://raw.githubusercontent.com/EdonZo/talkthru/main/site/img/web/mac-2-downloads.png" alt="Options menu with Downloads ticked under Save to"></td>
+<td width="50%"><img src="https://raw.githubusercontent.com/EdonZo/talkthru/main/site/img/web/mac-3-mic.png" alt="Options menu with MacBook Pro Microphone ticked"></td>
+</tr>
+<tr>
+<td><b>3.</b> <b>Save to → Downloads</b> — the folder <code>talkthru watch</code> looks at</td>
+<td><b>4.</b> pick your mic under <b>Microphone</b></td>
+</tr>
+<tr>
+<td colspan="2"><img src="https://raw.githubusercontent.com/EdonZo/talkthru/main/site/img/web/mac-4-record.png" alt="Screenshot toolbar with the Record button highlighted"></td>
+</tr>
+<tr>
+<td colspan="2"><b>5.</b> hit <b>Record</b> and talk as you use your app</td>
+</tr>
+</table>
+
+**No mic selected means a silent video** and nothing to transcribe. Worth checking before
+your first recording.
+
+---
+
 ## Set up your phone
+
+Optional — only if you want to record a phone app rather than your desktop.
 
 Once. Control Centre → **+** → **Add a Control** → **Screen Recording**. Then press and
 hold it and turn the **microphone on**.

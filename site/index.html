@@ -209,6 +209,12 @@
     border: 1px solid var(--line); border-radius: 9px; overflow: hidden; background: var(--line); }
   @media (min-width: 560px) { ol.phone { grid-template-columns: repeat(2, 1fr); } }
   @media (min-width: 900px) { ol.phone { grid-template-columns: repeat(3, 1fr); } }
+  /* mac: full width — these are toolbar strips, they stop being readable in a column */
+  @media (min-width: 560px) { ol.phone.mac { grid-template-columns: 1fr; } }
+  @media (min-width: 900px) { ol.phone.mac { grid-template-columns: 1fr; } }
+  ol.phone.mac img { width: auto; max-width: 100%; }
+  /* first mac step covers two of the callouts in the shot */
+  ol.phone.mac .s.two { width: auto; padding: 0 6px; }
   ol.phone li { background: var(--bg); padding: 16px; display: flex; gap: 10px; }
   ol.phone .s {
     font-family: var(--mono); font-size: 11px; color: var(--mint);
@@ -247,8 +253,8 @@
     <div class="chip"><span class="dot"></span> runs entirely on your machine</div>
     <h1>An automated feedback loop<br><span class="g">for any app.</span></h1>
     <p class="sub">
-      Screen-record your app on your phone and talk while you use it. Send it to your machine
-      and your coding agent gets everything you said, attached to the screen you were
+      Screen-record your app &mdash; on your mac or your phone &mdash; and talk while you use it.
+      Your coding agent gets everything you said, attached to the screen you were
       looking at when you said it.
     </p>
 
@@ -289,7 +295,7 @@
       </li>
     </ol>
     <div class="meta">macOS · ffmpeg + whisper.cpp · no accounts, no keys, no telemetry</div>
-    <p class="tested">Tested on macOS with an iPhone. Anything that produces a video with sound should work &mdash; point the watcher at a folder.</p>
+    <p class="tested">Works with a mac screen recording (⌘⇧5) or an iPhone one over AirDrop. Anything that produces a video with sound should work &mdash; point the watcher at a folder.</p>
   </section>
 
 
@@ -303,7 +309,50 @@
   </section>
 
   <section class="setup">
+    <h2>Setup — once, on your mac</h2>
+    <ol class="phone mac">
+      <li>
+        <span class="s two">1&middot;2</span>
+        <div>
+          <p>Press <strong>⌘⇧5</strong>, then pick a <strong>record</strong> mode — the icons with
+          the ◉ dot. Open <strong>Options</strong>.</p>
+          <img src="img/web/mac-1-record-mode.png" alt="macOS screenshot toolbar with Record Entire Screen selected and the Options button highlighted" loading="lazy" decoding="async">
+        </div>
+      </li>
+      <li>
+        <span class="s">3</span>
+        <div>
+          <p>In Options, set <strong>Save to → Downloads</strong>. That is the folder
+          <code class="inl">talkthru watch</code> looks at.</p>
+          <img src="img/web/mac-2-downloads.png" alt="Options menu with Downloads ticked under Save to" loading="lazy" decoding="async">
+        </div>
+      </li>
+      <li>
+        <span class="s">4</span>
+        <div>
+          <p>Further down the same menu, pick your mic under <strong>Microphone</strong>.
+          Both settings stick for next time.</p>
+          <img src="img/web/mac-3-mic.png" alt="Options menu with MacBook Pro Microphone ticked under Microphone" loading="lazy" decoding="async">
+        </div>
+      </li>
+      <li>
+        <span class="s">5</span>
+        <div>
+          <p>Hit <strong>Record</strong> and talk as you use your app.</p>
+          <img src="img/web/mac-4-record.png" alt="macOS screenshot toolbar with the Record button highlighted" loading="lazy" decoding="async">
+        </div>
+      </li>
+    </ol>
+    <p class="after">
+      No mic selected means a silent video and nothing to transcribe — that one is worth
+      checking before your first recording.
+    </p>
+  </section>
+
+  <section class="setup">
     <h2>Setup — once, on your phone</h2>
+    <p class="after" style="margin-top:0;margin-bottom:18px">Optional. Only if you want to record a phone app
+    rather than your desktop.</p>
     <ol class="phone">
       <li>
         <span class="s">1</span>
