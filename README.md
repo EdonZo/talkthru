@@ -134,6 +134,26 @@ hold it and turn the **microphone on**.
 
 ---
 
+## Recording a web app
+
+Optional — a drop-in script that hands the agent the element you were pointing at, not
+just the picture of it.
+
+```html
+<script src="/talkthru-dom.js"></script>
+```
+
+Record, then `talkthru.stop()` in the console downloads `hierarchy.json`. Process the two
+together:
+
+```bash
+talkthru process ~/Downloads/screen-recording.mov --hierarchy ~/Downloads/hierarchy.json
+```
+
+The script and what it captures: [`clients/web`](clients/web).
+
+---
+
 ## Use it
 
 1. Record your app, talk as you go
