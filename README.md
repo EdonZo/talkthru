@@ -199,6 +199,36 @@ files are ignored with a warning rather than failing the recording.
 
 ---
 
+## Network and console (optional)
+
+Drop an `events.json` next to your recording and failed requests land under the
+frame you were looking at:
+
+```markdown
+## 00:34 · f11 — `frames/f11.jpg`
+ui: button#checkout-submit "Place order" @24,680 342x48
+net: POST https://api.example.com/checkout 500 340ms
+- [00:39] "I tapped place order and nothing happened"
+```
+
+```json
+{ "events": [
+  { "tMs": 12400, "kind": "network", "method": "POST",
+    "url": "https://api.example.com/checkout", "status": 500, "durationMs": 340 },
+  { "tMs": 12450, "kind": "console", "level": "error", "text": "TypeError: ..." }
+] }
+```
+
+**No headers, no bodies** — auth tokens live in headers and the point of this
+tool is that your data stays on your machine. Secret-looking query values are
+replaced with `REDACTED` at parse time. Everything you send is stored; only
+failures and `error`/`warn` reach the agent by default, because two minutes of
+XHR is more text than the frames and narration combined.
+
+**Full format: [docs/events.md](https://github.com/EdonZo/talkthru/blob/main/docs/events.md)**
+
+---
+
 ## Commands
 
 ```bash

@@ -6,6 +6,7 @@ import { extractAudioWav, framesToVideo, meanVolumeDb, probeMedia, resolveFfmpeg
 import { extractKeyframes } from './keyframes.js';
 import { buildTimeline, segmentUtterances, timelineFromFramesOnly } from './align.js';
 import { normaliseSnapshots } from './uiContext.js';
+import { normaliseEvents } from './events.js';
 import { renderWithinBudget } from './render.js';
 import { defaultTranscriber, NullTranscriber } from './whisper.js';
 import { transcribeSegmented } from './speech.js';
@@ -17,6 +18,7 @@ import type {
   MediaInfo,
   SessionBundle,
   SessionMetadata,
+  TimedEvent,
   Transcriber,
   Transcript,
   UiSnapshot,
@@ -31,6 +33,7 @@ export interface DiscoveredInputs {
   audioPath?: string;
   metaPath?: string;
   hierarchyPath?: string;
+  eventsPath?: string;
   /** Directory of numbered stills, when the client uploaded a frame sequence. */
   frameSequenceDir?: string;
   frameSequenceExt?: string;
@@ -63,10 +66,15 @@ export async function discoverInputs(rawDir: string): Promise<DiscoveredInputs> 
       }
       continue;
     }
-    const ext = path.extname(entry.name).toLowerCase();
-    const base = path.basename(entry.name, ext).toLowerCase();
+    // Strip with the extension as it was actually spelled: path.basename matches
+    // the suffix case-sensitively, so passing an already-lowercased '.json'
+    // leaves 'Meta.JSON' intact and the file is never recognised.
+    const rawExt = path.extname(entry.name);
+    const ext = rawExt.toLowerCase();
+    const base = path.basename(entry.name, rawExt).toLowerCase();
     if (base === 'meta' && ext === '.json') found.metaPath = full;
     else if (base === 'hierarchy' && ext === '.json') found.hierarchyPath = full;
+    else if (base === 'events' && ext === '.json') found.eventsPath = full;
     else if (VIDEO_EXT.has(ext) && !found.videoPath) found.videoPath = full;
     else if (AUDIO_EXT.has(ext) && !found.audioPath) found.audioPath = full;
     else if (IMAGE_EXT.has(ext)) images.push(full);
@@ -116,6 +124,7 @@ export async function processSession(
   const inputs = await discoverInputs(rawDir);
   const metadata = await loadMetadata(inputs.metaPath);
   const snapshots = await loadSnapshots(inputs.hierarchyPath, warnings);
+  const events = await loadEvents(inputs.eventsPath, warnings);
 
   // A frame sequence becomes a video so the rest of the pipeline is uniform.
   let videoPath = inputs.videoPath;
@@ -271,8 +280,8 @@ export async function processSession(
   const audioOffsetMs = typeof metadata.audioOffsetMs === 'number' ? metadata.audioOffsetMs : 0;
   const timeline =
     utterances.length > 0
-      ? buildTimeline(utterances, keyframes, snapshots, { audioOffsetMs })
-      : timelineFromFramesOnly(keyframes, snapshots);
+      ? buildTimeline(utterances, keyframes, snapshots, { audioOffsetMs, events })
+      : timelineFromFramesOnly(keyframes, snapshots, events);
 
   /* -------------------------------- render ------------------------------- */
   await patchStatus(cfg, id, { stage: 'render' });
@@ -286,6 +295,9 @@ export async function processSession(
     warnings,
     transcriptEngine: transcript.engine,
     coarseTiming: transcript.coarseTiming,
+    // Only set when the client actually captured something, so a session
+    // without an events.json renders exactly as it did before this existed.
+    ...(events.length > 0 ? { capturedEvents: events } : {}),
   });
   if (rendered.trimmed) {
     warnings.push('UI context was trimmed to keep session.md within its token budget.');
@@ -335,6 +347,18 @@ async function loadMetadata(file: string | undefined): Promise<SessionMetadata> 
   if (!file) return {};
   const parsed = await readJson<SessionMetadata>(file);
   return parsed && typeof parsed === 'object' ? parsed : {};
+}
+
+async function loadEvents(file: string | undefined, warnings: string[]): Promise<TimedEvent[]> {
+  if (!file) return [];
+  const parsed = await readJson<unknown>(file);
+  if (parsed === null) {
+    warnings.push('The events file could not be parsed and was ignored.');
+    return [];
+  }
+  const events = normaliseEvents(parsed);
+  if (events.length === 0) warnings.push('The events file contained no usable entries.');
+  return events;
 }
 
 async function loadSnapshots(file: string | undefined, warnings: string[]): Promise<UiSnapshot[]> {

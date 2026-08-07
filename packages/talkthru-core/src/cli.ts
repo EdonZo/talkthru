@@ -72,6 +72,8 @@ Usage
   talkthru process <file.mp4> [audio.wav] [--hierarchy h.json] [--no-audio]
   talkthru process <session-id>
       Build a bundle from local files, or re-process an existing session.
+      An events.json beside the media adds network/console context; see
+      docs/events.md and docs/hierarchy.md for both sidecar formats.
 
   talkthru watch                       watch ~/Downloads, SCREEN RECORDINGS ONLY
   talkthru watch <dir>                 watch <dir>, ANY video file

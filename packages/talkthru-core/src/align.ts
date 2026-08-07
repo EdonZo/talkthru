@@ -1,6 +1,7 @@
 import { ALIGN } from './constants.js';
 import { summariseNodes, snapshotForTime } from './uiContext.js';
-import type { Keyframe, TimelineEntry, TranscriptWord, UiSnapshot, Utterance } from './types.js';
+import { eventsForWindow } from './events.js';
+import type { Keyframe, TimedEvent, TimelineEntry, TranscriptWord, UiSnapshot, Utterance } from './types.js';
 
 /**
  * Split a word stream into utterances at natural pauses.
@@ -83,6 +84,8 @@ export interface AlignOptions {
   /** Audio-vs-video skew, ms. Positive = audio started after video. */
   audioOffsetMs?: number;
   lagMs?: number;
+  /** Network/console activity to attach, if the client captured any. */
+  events?: TimedEvent[];
 }
 
 export function buildTimeline(
@@ -92,6 +95,7 @@ export function buildTimeline(
   opts: AlignOptions = {},
 ): TimelineEntry[] {
   const offset = opts.audioOffsetMs ?? 0;
+  const events = opts.events ?? [];
   return utterances.map((u) => {
     const videoStart = Math.max(0, u.startMs + offset);
     const kf = keyframeForTime(keyframes, videoStart, opts.lagMs);
@@ -105,17 +109,36 @@ export function buildTimeline(
       keyframePath: kf ? kf.relPath : null,
       uiContext: snapshot ? summariseNodes(snapshot.nodes) : [],
       occlusions: [...new Set(occlusions)],
+      ...attachEvents(events, videoStart, Math.max(0, u.endMs + offset)),
     };
   });
+}
+
+/**
+ * Only set `events` when there is something to say. An empty array on every
+ * entry would show up in session.json for the overwhelming majority of sessions
+ * that capture no events at all.
+ */
+function attachEvents(events: TimedEvent[], startMs: number, endMs: number): { events?: TimedEvent[] } {
+  if (events.length === 0) return {};
+  const picked = eventsForWindow(events, startMs, endMs);
+  return picked.length > 0 ? { events: picked } : {};
 }
 
 /**
  * When there is no narration at all we still want a useful bundle: emit one
  * entry per keyframe so the agent gets an ordered visual walkthrough.
  */
-export function timelineFromFramesOnly(keyframes: Keyframe[], snapshots: UiSnapshot[] = []): TimelineEntry[] {
-  return keyframes.map((kf) => {
+export function timelineFromFramesOnly(
+  keyframes: Keyframe[],
+  snapshots: UiSnapshot[] = [],
+  events: TimedEvent[] = [],
+): TimelineEntry[] {
+  return keyframes.map((kf, i) => {
     const snapshot = snapshotForTime(snapshots, kf.tMs);
+    // With no narration the frame itself is the unit, so the window runs from
+    // this frame to the next rather than around a sentence.
+    const nextMs = keyframes[i + 1]?.tMs ?? kf.tMs;
     return {
       utterance: '',
       startMs: kf.tMs,
@@ -124,6 +147,7 @@ export function timelineFromFramesOnly(keyframes: Keyframe[], snapshots: UiSnaps
       keyframePath: kf.relPath,
       uiContext: snapshot ? summariseNodes(snapshot.nodes) : [],
       occlusions: [...new Set([...(kf.occlusions ?? []), ...(snapshot?.occlusions ?? [])])],
+      ...attachEvents(events, kf.tMs, Math.max(kf.tMs, nextMs)),
     };
   });
 }
