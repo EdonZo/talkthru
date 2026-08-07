@@ -15,7 +15,7 @@ agent:  sees both screens, finds both components, fixes them.
 
 Runs entirely on your machine. No accounts, no uploads, no API keys.
 
-Works with a mac screen recording (⌘⇧5) or an iPhone one over AirDrop. Any video with sound works — point the watcher at a folder.
+Works with a mac screen recording (⌘⇧5), an iPhone one over AirDrop, or Windows Game Bar. Any video with sound works — point the watcher at a folder.
 
 [![Watch the 70-second demo](https://img.youtube.com/vi/3BimSScnGOg/maxresdefault.jpg)](https://youtu.be/3BimSScnGOg)
 
@@ -226,6 +226,25 @@ failures and `error`/`warn` reach the agent by default, because two minutes of
 XHR is more text than the frames and narration combined.
 
 **Full format: [docs/events.md](https://github.com/EdonZo/talkthru/blob/main/docs/events.md)**
+
+---
+
+## Windows
+
+`Win+Alt+R` (Game Bar) records to `Videos\Captures`, which is where the watcher
+looks by default — no name filter there, because that folder holds nothing else:
+
+```powershell
+winget install -e --id Gyan.FFmpeg
+npx talkthru watch
+```
+
+whisper.cpp has no winget package. Build it from
+[ggml-org/whisper.cpp](https://github.com/ggml-org/whisper.cpp) and point
+`TALKTHRU_WHISPER` at the binary.
+
+Written and unit-tested for Windows, but **not yet run on a Windows machine** —
+I do not have one. If you try it, an issue either way is useful.
 
 ---
 

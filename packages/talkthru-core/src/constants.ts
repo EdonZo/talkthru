@@ -243,6 +243,8 @@ export const MCP = {
 export const WATCH = {
   /** Where AirDrop puts things. */
   DEFAULT_DIR_NAME: 'Downloads',
+  /** Windows Game Bar's own output folder, relative to the user profile. */
+  WINDOWS_CAPTURES_DIR: ['Videos', 'Captures'] as readonly string[],
   /** Processed originals move here rather than being deleted. */
   ARCHIVE_DIR_NAME: 'archive',
   /**

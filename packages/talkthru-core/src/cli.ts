@@ -3,7 +3,13 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { resolveConfig, type TalkthruConfig } from './config.js';
 import { INGEST, WATCH } from './constants.js';
-import { defaultArchiveDir, defaultWatchDir, watchDirectory, SCREEN_RECORDING_PATTERN } from './watch.js';
+import {
+  defaultArchiveDir,
+  defaultPattern,
+  defaultWatchDir,
+  watchDirectory,
+  SCREEN_RECORDING_PATTERN,
+} from './watch.js';
 import { isTalkthruError, toTalkthruError } from './errors.js';
 import { setLogLevel, type LogLevel } from './log.js';
 import { processSession } from './pipeline.js';
@@ -225,7 +231,9 @@ async function cmdWatch(cfg: TalkthruConfig, args: Args): Promise<void> {
   if (typeof customPattern === 'string') pattern = new RegExp(customPattern, 'i');
   else if (args.flags.get('any') === true) pattern = null;
   else if (args.flags.get('screen-recordings') === true) pattern = SCREEN_RECORDING_PATTERN;
-  else pattern = explicitDir ? null : SCREEN_RECORDING_PATTERN;
+  // On Windows the default folder is Videos\Captures, which holds nothing but
+  // recordings, so the name filter is both unnecessary and unmatchable there.
+  else pattern = explicitDir ? null : defaultPattern();
 
   if (!(await ensureReady(cfg))) return;
 
