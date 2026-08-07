@@ -163,6 +163,42 @@ Plus the frames. A two-minute session is about 600 tokens.
 
 ---
 
+## Element context (optional)
+
+Point talkthru at a UI hierarchy file and your agent gets element types, labels
+and **stable test ids** instead of guessing which component you meant from
+pixels:
+
+```bash
+talkthru process recording.mp4 --hierarchy hierarchy.json
+```
+
+```markdown
+## 00:34 · f11 — `frames/f11.jpg`
+ui: button#checkout-submit "Place order" @24,680 342x48
+- [00:39] "this button is too small, I keep missing it"
+```
+
+It is a timestamped sidecar your app writes — nothing here generates it, and the
+format is plain JSON with no iOS-specific assumption:
+
+```json
+{ "snapshots": [
+  { "tMs": 1200, "nodes": [
+    { "type": "button", "testId": "checkout-submit", "label": "Place order",
+      "rect": [24, 680, 342, 48], "depth": 4 }
+  ] }
+] }
+```
+
+Common alternate spellings (`tag`, `id`, `text`, `bounds`, `elements`, …) are
+accepted as-is, so a DOM client can usually emit its natural shape. Malformed
+files are ignored with a warning rather than failing the recording.
+
+**Full format: [docs/hierarchy.md](https://github.com/EdonZo/talkthru/blob/main/docs/hierarchy.md)** — fields, aliases, ranking rules, and how to write a client.
+
+---
+
 ## Commands
 
 ```bash
