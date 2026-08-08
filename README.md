@@ -277,7 +277,8 @@ talkthru process video.mp4      # process one file
 talkthru list                   # recent sessions
 talkthru show latest            # print one
 talkthru doctor                 # check the setup
-talkthru prune                  # delete old sessions
+talkthru compact                # reclaim disk: drops old originals, keeps every frame + transcript
+talkthru prune                  # delete old sessions entirely
 ```
 
 `tt` also works.

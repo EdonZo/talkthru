@@ -5,6 +5,7 @@ import { WATCH } from './constants.js';
 import { toTalkthruError } from './errors.js';
 import { log } from './log.js';
 import { importMedia } from './import.js';
+import { patchStatus } from './store.js';
 import { processSession, type ProcessOptions, type ProcessResult } from './pipeline.js';
 import type { TalkthruConfig } from './config.js';
 
@@ -312,6 +313,9 @@ export async function watchTick(
       // Archive only after a successful run, so a failure leaves the original
       // exactly where the human can see it.
       const archivedTo = await archiveFile(source, archiveDir);
+      // Recorded so compaction can reclaim the archived original together with
+      // the session it belongs to, and so the receipt can name it.
+      await patchStatus(cfg, id, { archivedTo });
       processed.push(id);
       opts.onProcessed?.({
         file: source,

@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import { constants as fsConstants } from 'node:fs';
 import path from 'node:path';
 import { BUNDLE } from './constants.js';
 import { TalkthruError, ErrorCodes } from './errors.js';
@@ -34,7 +35,10 @@ export async function importMedia(
 
   for (const file of files) {
     // Copy rather than link: the source may be a temp file the user deletes.
-    await fs.copyFile(file, path.join(rawDir, safeFileName(path.basename(file))));
+    // FICLONE makes this a copy-on-write clone on APFS/btrfs — instant and
+    // zero extra disk for a multi-GB recording — and silently falls back to a
+    // real copy on filesystems without reflinks.
+    await fs.copyFile(file, path.join(rawDir, safeFileName(path.basename(file))), fsConstants.COPYFILE_FICLONE);
   }
   if (opts.hierarchyPath) {
     await fs.copyFile(opts.hierarchyPath, path.join(rawDir, 'hierarchy.json'));

@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { KEYFRAMES, BUNDLE } from './constants.js';
-import { extractFrameAt, extractProbeFrames, fitDimensions, type FfmpegTools } from './ffmpeg.js';
+import { extractFrameAt, extractProbeFrames, fitDimensions, type FfmpegTools, durationScaledTimeout } from './ffmpeg.js';
 import { log } from './log.js';
 import type { Keyframe, MediaInfo } from './types.js';
 
@@ -289,7 +289,12 @@ export async function extractKeyframes(
     return { keyframes: [], warnings: ['No video track — bundle is narration only.'], probeFrameCount: 0 };
   }
 
-  const { frames, fps, edge } = await extractProbeFrames(tools, media.path, { signal: opts.signal });
+  const { frames, fps, edge } = await extractProbeFrames(tools, media.path, {
+    signal: opts.signal,
+    // Decoding scales with length; a flat ceiling times out long recordings
+    // on slow hardware while a phone clip never gets near it.
+    timeoutMs: durationScaledTimeout(media.durationMs),
+  });
   if (frames.length === 0) {
     return {
       keyframes: [],

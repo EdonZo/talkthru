@@ -16,7 +16,8 @@
     "fixture:audio": "node scripts/make-fixture-audio.mjs",
     "golden:accept": "cd packages/talkthru-core && GOLDEN_ACCEPT=1 npx vitest run test/pipeline.test.ts",
     "e2e:whisper": "cd packages/talkthru-core && TALKTHRU_E2E_WHISPER=1 npx vitest run test/e2e-whisper.test.ts",
-    "doctor": "node packages/talkthru-core/dist/cli.js doctor"
+    "doctor": "node packages/talkthru-core/dist/cli.js doctor",
+    "e2e:upgrade": "node scripts/e2e-upgrade.mjs"
   },
   "devDependencies": {
     "typescript": "^5.7.2",

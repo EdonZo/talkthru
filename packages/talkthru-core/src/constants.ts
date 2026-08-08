@@ -279,6 +279,26 @@ export const WATCH = {
   PARTIAL_SUFFIXES: ['.download', '.part', '.partial', '.crdownload', '.tmp', '.opdownload'],
 } as const;
 
+/**
+ * Reclaiming disk from processed recordings.
+ *
+ * The trade compact makes: the frames + transcript (about 1 MB) are the
+ * history and are kept forever; the original video (tens to hundreds of MB)
+ * only enables re-processing and is dropped once the grace period passes.
+ *
+ * The invariant that outranks every knob here: nothing that has not been
+ * successfully turned into frames + text is ever deleted automatically. A
+ * failed session keeps its media until a human deletes it.
+ */
+export const COMPACT = {
+  /** Newest sessions are never compacted, whatever the policy says. */
+  KEEP_RECENT: 5,
+  /** Compact raw media in sessions older than this, days. */
+  DEFAULT_DAYS: 14,
+  /** ...or once raw media across sessions + archive exceeds this, bytes. */
+  DEFAULT_MAX_RAW_BYTES: 10 * 1024 * 1024 * 1024,
+} as const;
+
 export const STORE = {
   /** Session ids look like 20260803-001500-a1b2c3. */
   ID_PATTERN: /^[0-9]{8}-[0-9]{6}-[a-z0-9]{6}$/,
