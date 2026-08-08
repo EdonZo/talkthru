@@ -1,7 +1,7 @@
 {
-  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.json",
-  "name": "io.github.edonzo/talkthru",
-  "description": "Narrated screen recordings as agent context: record your app, talk while using it, and each sentence lands on the frame you were looking at. Fully local via ffmpeg + whisper.cpp.",
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
+  "name": "io.github.EdonZo/talkthru",
+  "description": "Talk while using your app \u2014 your coding agent gets each sentence aligned to the frame. Fully local.",
   "repository": {
     "url": "https://github.com/EdonZo/talkthru",
     "source": "github"
@@ -9,10 +9,12 @@
   "version": "0.2.1",
   "packages": [
     {
-      "registry_type": "npm",
+      "registryType": "npm",
       "identifier": "talkthru-mcp",
-      "version": "0.2.1",
-      "transport": { "type": "stdio" }
+      "version": "0.2.2",
+      "transport": {
+        "type": "stdio"
+      }
     }
   ]
 }

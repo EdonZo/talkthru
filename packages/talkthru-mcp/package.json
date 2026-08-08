@@ -1,11 +1,11 @@
 {
   "name": "talkthru-mcp",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "MCP server that hands talkthru sessions (screens + narration) to any MCP client.",
   "license": "MIT",
   "type": "module",
   "bin": {
-    "talkthru-mcp": "./dist/server.js"
+    "talkthru-mcp": "dist/server.js"
   },
   "main": "./dist/server.js",
   "files": [
@@ -47,5 +47,5 @@
   "publishConfig": {
     "access": "public"
   },
-  "mcpName": "io.github.edonzo/talkthru"
+  "mcpName": "io.github.EdonZo/talkthru"
 }
