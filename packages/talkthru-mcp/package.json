@@ -1,6 +1,6 @@
 {
   "name": "talkthru-mcp",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "MCP server that hands talkthru sessions (screens + narration) to any MCP client.",
   "license": "MIT",
   "type": "module",
@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",
-    "talkthru": "0.2.0"
+    "talkthru": "0.2.1"
   },
   "keywords": [
     "mcp",
@@ -46,5 +46,6 @@
   "author": "Edon Zogaj",
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "mcpName": "io.github.edonzo/talkthru"
 }

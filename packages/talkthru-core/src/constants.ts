@@ -103,6 +103,19 @@ export const TRANSCRIBE = {
   /** Models known to work; anything else is passed through to the downloader. */
   KNOWN_MODELS: ['tiny.en', 'base.en', 'small.en', 'medium.en', 'large-v3'],
   MODEL_BASE_URL: 'https://huggingface.co/ggerganov/whisper.cpp/resolve/main',
+  /**
+   * Pinned SHA-256 per known model, from the HuggingFace LFS manifest.
+   * A download that does not hash to this is discarded — the size floor
+   * catches truncation, this catches tampering and corruption. Models not in
+   * this map (custom TALKTHRU_MODEL values) download with a warning instead.
+   */
+  MODEL_SHA256: {
+    'tiny.en': '921e4cf8686fdd993dcd081a5da5b6c365bfde1162e72b08d75ac75289920b1f',
+    'base.en': 'a03779c86df3323075f5e796cb2ce5029f00ec8869eee3fdfb897afe36c6d002',
+    'small.en': 'c6138d6d58ecc8322097e0f987c32f1be8bb0a18532a3f88f734d1bbf9c41e5d',
+    'medium.en': 'cc37e93478338ec7700281a7ac30a10128929eb8f427dda2e865faa8f6da4356',
+    'large-v3': '64d182b440b98d5203c4f9bd541544d84c605196c4f7b845dfa11fb23594d1e2',
+  } as Record<string, string>,
   /** Download timeout for the model, ms. */
   DOWNLOAD_TIMEOUT_MS: 20 * 60_000,
   /** Sanity floor: a truncated model download is worse than none. Bytes. */

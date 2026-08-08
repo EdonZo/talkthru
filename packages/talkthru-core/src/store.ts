@@ -57,8 +57,8 @@ export function safeFileName(name: string, fallback = 'file.bin'): string {
 
 export async function ensureSessionDirs(cfg: TalkthruConfig, id: string): Promise<string> {
   const dir = sessionDir(cfg, id);
-  await fs.mkdir(path.join(dir, BUNDLE.RAW_DIR), { recursive: true });
-  await fs.mkdir(path.join(dir, BUNDLE.FRAMES_DIR), { recursive: true });
+  await fs.mkdir(path.join(dir, BUNDLE.RAW_DIR), { recursive: true, mode: 0o700 });
+  await fs.mkdir(path.join(dir, BUNDLE.FRAMES_DIR), { recursive: true, mode: 0o700 });
   return dir;
 }
 

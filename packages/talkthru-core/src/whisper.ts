@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
 import { createWriteStream } from 'node:fs';
+import crypto from 'node:crypto';
 import path from 'node:path';
 import os from 'node:os';
 import { pipeline } from 'node:stream/promises';
@@ -164,7 +165,7 @@ export async function ensureModel(opts: {
     });
   }
 
-  await fs.mkdir(opts.modelsDir, { recursive: true });
+  await fs.mkdir(opts.modelsDir, { recursive: true, mode: 0o700 });
   const lock = `${target}.lock`;
   const acquired = await acquireLock(lock);
   if (!acquired) {
@@ -196,11 +197,34 @@ export async function ensureModel(opts: {
       );
     }
     await fs.rm(tmp, { force: true });
-    await pipeline(Readable.fromWeb(res.body as never), createWriteStream(tmp));
+    const hash = crypto.createHash('sha256');
+    await pipeline(
+      Readable.fromWeb(res.body as never),
+      async function* (source: AsyncIterable<Buffer>) {
+        for await (const chunk of source) {
+          hash.update(chunk);
+          yield chunk;
+        }
+      },
+      createWriteStream(tmp),
+    );
     const size = await statSize(tmp);
     if (size === null || size < TRANSCRIBE.MIN_MODEL_BYTES) {
       await fs.rm(tmp, { force: true });
       throw new TalkthruError(ErrorCodes.MODEL_DOWNLOAD_FAILED, `Downloaded model is truncated (${size} bytes)`);
+    }
+    const digest = hash.digest('hex');
+    const check = verifyModelDigest(opts.model, digest);
+    if (!check.ok && check.expected !== null) {
+      await fs.rm(tmp, { force: true });
+      throw new TalkthruError(
+        ErrorCodes.MODEL_DOWNLOAD_FAILED,
+        `Model ${opts.model} failed checksum verification (got ${digest.slice(0, 12)}…, expected ${check.expected.slice(0, 12)}…)`,
+        { hint: 'The download was corrupted or tampered with. Try again; if it persists, something is wrong upstream.' },
+      );
+    }
+    if (check.expected === null) {
+      log.warn(`no pinned checksum for model ${opts.model}; downloaded without verification`, { digest });
     }
     await fs.rename(tmp, target);
     log.info(`model ready at ${target}`);
@@ -212,6 +236,20 @@ export async function ensureModel(opts: {
   } finally {
     await fs.rm(lock, { force: true });
   }
+}
+
+/**
+ * Compare a downloaded model's digest against the pinned checksum.
+ * Exported for tests. `expected: null` means the model is not in the pin map
+ * (a custom model) — allowed, with a warning at the call site.
+ */
+export function verifyModelDigest(
+  model: string,
+  digest: string,
+): { ok: boolean; expected: string | null } {
+  const expected = TRANSCRIBE.MODEL_SHA256[model] ?? null;
+  if (expected === null) return { ok: true, expected: null };
+  return { ok: digest === expected, expected };
 }
 
 async function statSize(file: string): Promise<number | null> {
