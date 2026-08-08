@@ -289,10 +289,25 @@ export async function probeMedia(tools: FfmpegTools, file: string): Promise<Medi
  * Deliberately a single ffmpeg pass piped to stdout: no temp files, and the
  * data volume is tiny (32x32 = 1 KiB per sample, 4 samples/sec).
  */
+
+/**
+ * A timeout that scales with the media instead of a flat ceiling.
+ *
+ * The flat 10-minute default is generous for a phone clip and marginal for a
+ * long 4K recording on an old machine: decoding is roughly proportional to
+ * duration, so give every job 3x the media's own length, floored at the
+ * default. Measured: a 10-min 4K file probes in ~40 s on Apple silicon, so 3x
+ * duration only ever matters on hardware an order of magnitude slower.
+ */
+export function durationScaledTimeout(durationMs: number | undefined, floorMs = DEFAULT_TIMEOUT_MS): number {
+  if (!durationMs || !Number.isFinite(durationMs) || durationMs <= 0) return floorMs;
+  return Math.max(floorMs, Math.round(durationMs * 3));
+}
+
 export async function extractProbeFrames(
   tools: FfmpegTools,
   file: string,
-  opts: { fps?: number; edge?: number; signal?: AbortSignal } = {},
+  opts: { fps?: number; edge?: number; signal?: AbortSignal; timeoutMs?: number } = {},
 ): Promise<{ frames: Buffer[]; fps: number; edge: number }> {
   const fps = opts.fps ?? KEYFRAMES.PROBE_FPS;
   const edge = opts.edge ?? KEYFRAMES.PROBE_EDGE_PX;
@@ -309,7 +324,7 @@ export async function extractProbeFrames(
       '-pix_fmt', 'rgb24',
       '-',
     ],
-    { captureStdout: true, signal: opts.signal },
+    { captureStdout: true, signal: opts.signal, timeoutMs: opts.timeoutMs },
   );
   const frameBytes = edge * edge * KEYFRAMES.PROBE_CHANNELS;
   const frames: Buffer[] = [];
@@ -360,7 +375,7 @@ export async function extractAudioWav(
   tools: FfmpegTools,
   file: string,
   outPath: string,
-  opts: { signal?: AbortSignal; normalise?: boolean } = {},
+  opts: { signal?: AbortSignal; normalise?: boolean; timeoutMs?: number } = {},
 ): Promise<void> {
   await fs.mkdir(path.dirname(outPath), { recursive: true });
   await run(
@@ -381,7 +396,7 @@ export async function extractAudioWav(
       '-y',
       outPath,
     ],
-    { signal: opts.signal },
+    { signal: opts.signal, timeoutMs: opts.timeoutMs },
   );
 }
 

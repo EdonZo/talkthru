@@ -160,6 +160,19 @@ export interface SessionStatus {
   warnings: string[];
   source: 'ingest' | 'local';
   bytesReceived?: number;
+  /** Where the watcher moved the original after successful processing. */
+  archivedTo?: string;
+  /**
+   * Set once raw media has been reclaimed. The receipt is what lets
+   * `talkthru list` say "compacted (saved 212 MB)" instead of the session
+   * silently shrinking — the user should see what was traded away.
+   */
+  compacted?: {
+    at: string;
+    freedBytes: number;
+    /** Names of the files that were removed, for the receipt. */
+    removed: string[];
+  };
 }
 
 export interface SessionSummary {

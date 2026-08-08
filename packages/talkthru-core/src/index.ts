@@ -81,3 +81,4 @@ export {
   speechFromSilence,
   type SpeechSegment,
 } from './speech.js';
+export { compactSession, compactSweep, compactableBytes, parseSize, parseDays, formatBytes } from './compact.js';

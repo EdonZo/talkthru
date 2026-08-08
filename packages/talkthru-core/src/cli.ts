@@ -14,6 +14,8 @@ import { isTalkthruError, toTalkthruError } from './errors.js';
 import { setLogLevel, type LogLevel } from './log.js';
 import { processSession } from './pipeline.js';
 import { importMedia } from './import.js';
+import { compactSweep, formatBytes, parseDays, parseSize } from './compact.js';
+
 import { startServer, ensureToken, VERSION, CLIENT_HEADER } from './server.js';
 import { advertise } from './bonjour.js';
 import { formatDoctor, lanAddresses, runDoctor } from './doctor.js';
@@ -98,6 +100,9 @@ Usage
   talkthru show [<session-id>|latest] [--json]
   talkthru path [<session-id>|latest]
   talkthru delete <session-id>
+  talkthru compact [--older-than 14d] [--max-raw 10GB] [--all] [--dry-run]
+      Reclaim disk from processed sessions: the original video/audio goes, every
+      frame and the full transcript stay. Never touches an unprocessed session.
   talkthru prune [--keep N] [--days N] [--dry-run]
   talkthru pair
       Print the token and URLs a device needs.
@@ -279,6 +284,16 @@ async function cmdWatch(cfg: TalkthruConfig, args: Args): Promise<void> {
       for (const warning of bundle.warnings) out(`  warning: ${warning}`);
       out(`  archived: ${archivedTo}`);
       out('');
+      // Retention runs after each successful session, so disk is reclaimed
+      // while the tool is actually in use rather than by a chore the user has
+      // to remember. Policy defaults live in COMPACT; --no-auto-compact opts out.
+      if (args.flags.get('no-auto-compact') !== true) {
+        void compactSweep(cfg).then((report) => {
+          if (report.compacted.length > 0) {
+            out(`  compacted ${report.compacted.length} old item(s), freed ${formatBytes(report.freedBytes)} — frames and transcripts kept`);
+          }
+        }).catch(() => { /* retention must never take down the watcher */ });
+      }
     },
     onError: ({ file, error }) => {
       out(`  FAILED ${path.basename(file)}: ${error.message}`);
@@ -333,6 +348,43 @@ async function cmdPrune(cfg: TalkthruConfig, args: Args): Promise<void> {
   });
   out(`${args.flags.get('dry-run') === true ? 'would delete' : 'deleted'} ${result.deleted.length}, kept ${result.kept}`);
   for (const id of result.deleted) out(`  ${id}`);
+}
+
+async function cmdCompact(cfg: TalkthruConfig, args: Args): Promise<void> {
+  const dryRun = args.flags.get('dry-run') === true;
+  const sizeFlag = args.flags.get('max-raw');
+  const daysFlag = args.flags.get('older-than') ?? args.flags.get('days');
+  const all = args.flags.get('all') === true;
+
+  const maxRawBytes = typeof sizeFlag === 'string' ? parseSize(sizeFlag) : undefined;
+  if (typeof sizeFlag === 'string' && maxRawBytes === null) {
+    throw new Error(`--max-raw: cannot parse "${sizeFlag}" (try 10GB, 500MB)`);
+  }
+  const days = all ? 0 : typeof daysFlag === 'string' ? parseDays(daysFlag) : undefined;
+  if (typeof daysFlag === 'string' && days === null) {
+    throw new Error(`--older-than: cannot parse "${daysFlag}" (try 14d, 36h)`);
+  }
+
+  const report = await compactSweep(cfg, {
+    ...(days !== undefined && days !== null ? { days } : {}),
+    ...(maxRawBytes !== undefined && maxRawBytes !== null ? { maxRawBytes } : {}),
+    dryRun,
+  });
+
+  const verb = dryRun ? 'would free' : 'freed';
+  out(`${verb} ${formatBytes(report.freedBytes)} from ${report.compacted.length} item(s)`);
+  for (const r of report.compacted) {
+    out(`  ${r.id} — ${formatBytes(r.freedBytes)} (${r.removed.join(', ')})`);
+  }
+  if (report.compacted.length > 0) {
+    out('kept for every session: all frames, the full transcript, session.md.');
+  }
+  if (report.skippedNotReady > 0) {
+    out(`${report.skippedNotReady} session(s) hold media but are not processed — never touched automatically.`);
+  }
+  if (report.overBudget) {
+    out('still over the raw-media budget; the rest belongs to recent or unprocessed sessions.');
+  }
 }
 
 async function cmdPair(cfg: TalkthruConfig): Promise<void> {
@@ -394,6 +446,9 @@ async function main(): Promise<void> {
     case 'delete':
     case 'rm':
       return cmdDelete(cfg, args);
+    case 'compact':
+      await cmdCompact(cfg, args);
+      break;
     case 'prune':
       return cmdPrune(cfg, args);
     case 'pair':

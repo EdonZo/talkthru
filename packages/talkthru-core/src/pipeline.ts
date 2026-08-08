@@ -2,7 +2,15 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { BUNDLE, KEYFRAMES, TRANSCRIBE } from './constants.js';
 import { TalkthruError, ErrorCodes, toTalkthruError } from './errors.js';
-import { extractAudioWav, framesToVideo, meanVolumeDb, probeMedia, resolveFfmpeg, type FfmpegTools } from './ffmpeg.js';
+import {
+  extractAudioWav,
+  framesToVideo,
+  meanVolumeDb,
+  probeMedia,
+  resolveFfmpeg,
+  type FfmpegTools,
+  durationScaledTimeout,
+} from './ffmpeg.js';
 import { extractKeyframes } from './keyframes.js';
 import { buildTimeline, segmentUtterances, timelineFromFramesOnly } from './align.js';
 import { normaliseSnapshots } from './uiContext.js';
@@ -10,7 +18,16 @@ import { normaliseEvents } from './events.js';
 import { renderWithinBudget } from './render.js';
 import { defaultTranscriber, NullTranscriber } from './whisper.js';
 import { transcribeSegmented } from './speech.js';
-import { bundlePath, markdownPath, patchStatus, readJson, sessionDir, writeJsonAtomic, writeTextAtomic } from './store.js';
+import {
+  bundlePath,
+  markdownPath,
+  patchStatus,
+  readJson,
+  sessionDir,
+  writeJsonAtomic,
+  writeTextAtomic,
+  readStatus,
+} from './store.js';
 import { log } from './log.js';
 import type { TalkthruConfig } from './config.js';
 import type {
@@ -24,8 +41,8 @@ import type {
   UiSnapshot,
 } from './types.js';
 
-const VIDEO_EXT = new Set(['.mp4', '.mov', '.m4v', '.webm', '.mkv', '.avi']);
-const AUDIO_EXT = new Set(['.wav', '.m4a', '.aac', '.mp3', '.caf', '.ogg', '.flac']);
+export const VIDEO_EXT = new Set(['.mp4', '.mov', '.m4v', '.webm', '.mkv', '.avi']);
+export const AUDIO_EXT = new Set(['.wav', '.m4a', '.aac', '.mp3', '.caf', '.ogg', '.flac']);
 const IMAGE_EXT = new Set(['.jpg', '.jpeg', '.png']);
 
 export interface DiscoveredInputs {
@@ -118,6 +135,18 @@ export async function processSession(
   const rawDir = path.join(dir, BUNDLE.RAW_DIR);
   const warnings: string[] = [];
 
+  // A compacted session has no raw media left by design. Without this check
+  // the user gets a baffling "no input files" error for a session they can
+  // see rendering perfectly well in `talkthru show`.
+  const existing = await readStatus(cfg, id);
+  if (existing?.compacted) {
+    throw new TalkthruError(
+      ErrorCodes.NO_MEDIA,
+      `Session ${id} was compacted on ${existing.compacted.at.slice(0, 10)}: its raw media was removed to save disk`,
+      { hint: 'The frames and transcript are still there (talkthru show). Re-processing needs the original recording — record again, or import the original file if you still have it.' },
+    );
+  }
+
   await patchStatus(cfg, id, { state: 'processing', stage: 'probe' });
 
   const tools = await resolveFfmpeg(cfg);
@@ -192,7 +221,7 @@ export async function processSession(
     } else {
       const target = path.join(rawDir, 'audio-16k.wav');
       try {
-        await extractAudioWav(tools, audioSource, target, opts.signal ? { signal: opts.signal } : {});
+        await extractAudioWav(tools, audioSource, target, { signal: opts.signal, timeoutMs: durationScaledTimeout(durationMs) });
         wavPath = target;
 
         // "Has an audio track" is not "has your voice". iOS always writes one;
@@ -216,6 +245,7 @@ export async function processSession(
           await extractAudioWav(tools, audioSource, target, {
             ...(opts.signal ? { signal: opts.signal } : {}),
             normalise: true,
+            timeoutMs: durationScaledTimeout(durationMs),
           });
           warnings.push(
             `The recording was quiet (${meanDb.toFixed(0)} dB) so it was amplified before ` +
