@@ -100,7 +100,7 @@ Usage
   talkthru show [<session-id>|latest] [--json]
   talkthru path [<session-id>|latest]
   talkthru delete <session-id>
-  talkthru compact [--older-than 14d] [--max-raw 10GB] [--all] [--dry-run]
+  talkthru compact [--older-than 14d] [--max-raw 10GB] [--keep-recent N] [--all] [--dry-run]
       Reclaim disk from processed sessions: the original video/audio goes, every
       frame and the full transcript stay. Never touches an unprocessed session.
   talkthru prune [--keep N] [--days N] [--dry-run]
@@ -365,9 +365,11 @@ async function cmdCompact(cfg: TalkthruConfig, args: Args): Promise<void> {
     throw new Error(`--older-than: cannot parse "${daysFlag}" (try 14d, 36h)`);
   }
 
+  const keepRecent = flagNumber(args, 'keep-recent', -1);
   const report = await compactSweep(cfg, {
     ...(days !== undefined && days !== null ? { days } : {}),
     ...(maxRawBytes !== undefined && maxRawBytes !== null ? { maxRawBytes } : {}),
+    ...(keepRecent >= 0 ? { keepRecent } : {}),
     dryRun,
   });
 
