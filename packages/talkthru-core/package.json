@@ -1,6 +1,6 @@
 {
   "name": "talkthru",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Talk while you use your app; your coding agent gets the screens you saw and the words you said, aligned. MCP server, runs entirely on your machine.",
   "license": "MIT",
   "type": "module",
