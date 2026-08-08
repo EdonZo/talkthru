@@ -60,7 +60,7 @@ function isLoopback(bind: string): boolean {
 }
 
 export async function ensureToken(cfg: TalkthruConfig): Promise<string> {
-  await fs.mkdir(path.dirname(cfg.tokenFile), { recursive: true });
+  await fs.mkdir(path.dirname(cfg.tokenFile), { recursive: true, mode: 0o700 });
   try {
     const existing = (await fs.readFile(cfg.tokenFile, 'utf8')).trim();
     if (existing.length >= 16) return existing;
