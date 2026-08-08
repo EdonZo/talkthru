@@ -24,7 +24,19 @@ import type { TalkthruConfig } from './config.js';
  * Downloads folder. A holiday video someone AirDrops you is never read, never
  * transcribed and never moved.
  */
-export const SCREEN_RECORDING_PATTERN = /(rpreplay|screen[ _-]?recording)/i;
+export const SCREEN_RECORDING_PATTERN =
+  /(rpreplay|screen[ _-]?recording|simulator[ _-]?screen|screen[ _-]?capture|screencast)/i;
+
+/**
+ * Windows Game Bar writes `<App> YYYY-MM-DD HH-MM-SS.mp4` into Videos\Captures
+ * — no fixed word to key off, so name-matching there is hopeless. It is also
+ * unnecessary: Captures contains nothing but recordings, unlike the shared
+ * Downloads folder the name filter exists to protect. So on Windows we watch
+ * Captures and accept everything in it.
+ */
+export function defaultPattern(platform: NodeJS.Platform = process.platform): RegExp | null {
+  return platform === 'win32' ? null : SCREEN_RECORDING_PATTERN;
+}
 
 export interface CandidateOptions {
   extensions?: readonly string[];
@@ -216,7 +228,18 @@ export function candidateOptions(opts: WatchOptions): CandidateOptions {
   };
 }
 
-export function defaultWatchDir(): string {
+/**
+ * Where recordings land by default.
+ *
+ * macOS/Linux: ~/Downloads, which is where AirDrop puts a phone recording and
+ * where the mac screenshot tool can be pointed. Windows: the Game Bar's own
+ * Videos\Captures, which is a dedicated folder rather than a shared one.
+ */
+export function defaultWatchDir(platform: NodeJS.Platform = process.platform): string {
+  if (platform === 'win32') {
+    const home = process.env.USERPROFILE ?? os.homedir();
+    return path.join(home, WATCH.WINDOWS_CAPTURES_DIR[0]!, WATCH.WINDOWS_CAPTURES_DIR[1]!);
+  }
   return path.join(os.homedir(), WATCH.DEFAULT_DIR_NAME);
 }
 

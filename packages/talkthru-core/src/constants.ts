@@ -182,6 +182,38 @@ export const UI_CONTEXT = {
   MIN_NODE_EDGE_PX: 8,
 } as const;
 
+/**
+ * Network calls and console lines captured alongside the recording.
+ *
+ * The budget here is deliberate. "Capture everything" is the right thing to
+ * *store*, but a couple of minutes of XHR traffic is far more text than the
+ * frames and narration put together, and it would crowd out the thing the user
+ * actually said. So the full log stays on disk and only notable events are put
+ * in front of the agent unless it asks for the rest.
+ */
+export const EVENTS = {
+  /**
+   * How far before an utterance starts to look for related activity. You click,
+   * it breaks, *then* you complain — the request is always slightly upstream of
+   * the sentence about it.
+   */
+  LOOKBEHIND_MS: 5_000,
+  /** Max events attached to any one timeline entry. */
+  MAX_PER_ENTRY: 6,
+  /** Truncate a console message to this many chars. */
+  MAX_TEXT_CHARS: 200,
+  /** Truncate a URL to this many chars. */
+  MAX_URL_CHARS: 180,
+  /** HTTP status at or above this counts as notable on its own. */
+  NOTABLE_STATUS_MIN: 400,
+  /** Console levels that count as notable. */
+  NOTABLE_LEVELS: ['error', 'warn'] as readonly string[],
+  /** Query parameter names whose values are replaced before the agent sees them. */
+  SECRET_PARAM: /(token|key|secret|password|passwd|pwd|auth|signature|sig|session|credential|bearer)/i,
+  /** What a redacted value is replaced with. */
+  REDACTED: 'REDACTED',
+} as const;
+
 export const BUNDLE = {
   /** Soft target for session.md size, characters (~4 chars/token). */
   TARGET_CHARS: 28_000,
@@ -211,6 +243,8 @@ export const MCP = {
 export const WATCH = {
   /** Where AirDrop puts things. */
   DEFAULT_DIR_NAME: 'Downloads',
+  /** Windows Game Bar's own output folder, relative to the user profile. */
+  WINDOWS_CAPTURES_DIR: ['Videos', 'Captures'] as readonly string[],
   /** Processed originals move here rather than being deleted. */
   ARCHIVE_DIR_NAME: 'archive',
   /**

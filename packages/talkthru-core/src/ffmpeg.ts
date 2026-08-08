@@ -7,11 +7,54 @@ import { log } from './log.js';
 import type { MediaInfo } from './types.js';
 
 const FFMPEG_INSTALL_HINT =
-  'Install it with `brew install ffmpeg` (macOS) or `apt install ffmpeg` (Linux), ' +
+  'Install it with `brew install ffmpeg` (macOS), `apt install ffmpeg` (Linux) ' +
+  'or `winget install ffmpeg` (Windows), ' +
   'or point TALKTHRU_FFMPEG / TALKTHRU_FFPROBE at the binaries.';
 
-/** Places Homebrew/MacPorts put ffmpeg when PATH is not inherited (launchd, MCP stdio). */
-const FALLBACK_DIRS = ['/opt/homebrew/bin', '/usr/local/bin', '/opt/local/bin', '/usr/bin'];
+/**
+ * Where to look when PATH does not have it.
+ *
+ * This exists because GUI-launched processes do not inherit a login shell PATH:
+ * an MCP server started by Claude Desktop, or a launchd job, sees a PATH that
+ * frequently lacks /opt/homebrew/bin entirely.
+ */
+export function fallbackDirs(platform: NodeJS.Platform = process.platform): string[] {
+  if (platform === 'win32') {
+    const dirs: string[] = [];
+    const push = (base: string | undefined, ...rest: string[]) => {
+      if (base) dirs.push(path.join(base, ...rest));
+    };
+    // Chocolatey and Scoop are how ffmpeg actually arrives on Windows; winget
+    // drops shims under LocalAppData.
+    push(process.env.ChocolateyInstall, 'bin');
+    push(process.env.ALLUSERSPROFILE, 'chocolatey', 'bin');
+    push(process.env.USERPROFILE, 'scoop', 'shims');
+    push(process.env.SCOOP, 'shims');
+    push(process.env.LOCALAPPDATA, 'Microsoft', 'WindowsApps');
+    push(process.env.ProgramFiles, 'ffmpeg', 'bin');
+    push(process.env['ProgramFiles(x86)'], 'ffmpeg', 'bin');
+    return dirs;
+  }
+  return ['/opt/homebrew/bin', '/usr/local/bin', '/opt/local/bin', '/usr/bin'];
+}
+
+/**
+ * Filenames to try for a bare binary name.
+ *
+ * On Windows `ffmpeg` is a file called `ffmpeg.exe`, so probing the bare name
+ * finds nothing and the tool reports ffmpeg as missing on a machine where it is
+ * installed and working. PATHEXT is the authority on which suffixes count.
+ */
+export function binaryCandidates(name: string, platform: NodeJS.Platform = process.platform): string[] {
+  if (platform !== 'win32') return [name];
+  if (path.extname(name) !== '') return [name];
+  const exts = (process.env.PATHEXT ?? '.COM;.EXE;.BAT;.CMD')
+    .split(';')
+    .map((e) => e.trim())
+    .filter(Boolean);
+  // The bare name last: a extensionless shim is unusual but not impossible.
+  return [...exts.map((e) => `${name}${e.toLowerCase()}`), name];
+}
 
 export interface RunResult {
   code: number;
@@ -143,7 +186,12 @@ async function fileExists(p: string): Promise<boolean> {
  * The PATH fallback matters because MCP servers are launched by GUI apps that
  * do not inherit a login shell PATH.
  */
-export async function resolveBinary(name: string, override?: string): Promise<string> {
+export async function resolveBinary(
+  name: string,
+  override?: string,
+  opts: { platform?: NodeJS.Platform } = {},
+): Promise<string> {
+  const platform = opts.platform ?? process.platform;
   if (override) {
     if (await fileExists(override)) return override;
     throw new TalkthruError(ErrorCodes.FFMPEG_MISSING, `Configured ${name} not found at ${override}`, {
@@ -152,9 +200,12 @@ export async function resolveBinary(name: string, override?: string): Promise<st
   }
   // `which` is not portable enough; probe PATH ourselves.
   const pathDirs = (process.env.PATH ?? '').split(path.delimiter).filter(Boolean);
-  for (const dir of [...pathDirs, ...FALLBACK_DIRS]) {
-    const candidate = path.join(dir, name);
-    if (await fileExists(candidate)) return candidate;
+  const names = binaryCandidates(name, platform);
+  for (const dir of [...pathDirs, ...fallbackDirs(platform)]) {
+    for (const candidateName of names) {
+      const candidate = path.join(dir, candidateName);
+      if (await fileExists(candidate)) return candidate;
+    }
   }
   throw new TalkthruError(ErrorCodes.FFMPEG_MISSING, `${name} not found on PATH`, { hint: FFMPEG_INSTALL_HINT });
 }

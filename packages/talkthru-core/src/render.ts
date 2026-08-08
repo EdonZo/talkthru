@@ -1,6 +1,7 @@
 import { BUNDLE, UI_CONTEXT } from './constants.js';
 import { formatNode } from './uiContext.js';
-import type { Keyframe, SessionMetadata, TimelineEntry, UiNode } from './types.js';
+import { formatEvent, summariseEvents } from './events.js';
+import type { Keyframe, SessionMetadata, TimedEvent, TimelineEntry, UiNode } from './types.js';
 
 export function formatTimestamp(ms: number): string {
   const total = Math.max(0, Math.round(ms / 1000));
@@ -22,6 +23,13 @@ export interface RenderInput {
   warnings: string[];
   transcriptEngine: string;
   coarseTiming: boolean;
+  /**
+   * Every event captured, not just the notable ones attached to the timeline.
+   * The header tally is drawn from this so a clean run reads as "nothing broke"
+   * rather than "nothing was recorded". Optional: sessions predating event
+   * capture, and every client that never writes an events.json, omit it.
+   */
+  capturedEvents?: TimedEvent[];
 }
 
 interface RenderOptions {
@@ -47,9 +55,14 @@ export function renderMarkdown(input: RenderInput, opts: RenderOptions = {}): st
   lines.push(`# Talkthru session ${input.id}`);
   lines.push(describeSession(input));
   lines.push('');
+  // The `net:` sentence only appears when there is something to explain, so a
+  // session that captured no events renders byte-identically to before event
+  // support existed.
+  const hasEvents = (input.capturedEvents?.length ?? 0) > 0;
   lines.push(
     'Frames are JPEGs beside this file. `ui:` lines list on-screen elements ' +
-      '(`Type#testId "label" @x,y WxH`, screen points) captured with the frame.',
+      '(`Type#testId "label" @x,y WxH`, screen points) captured with the frame.' +
+      (hasEvents ? ' `net:` lines are network calls and console output from around that moment.' : ''),
   );
   if (input.coarseTiming) {
     lines.push('Timing is sentence-level, not word-level: narration may lag its frame by a second.');
@@ -83,6 +96,10 @@ export function renderMarkdown(input: RenderInput, opts: RenderOptions = {}): st
       lines.push(`ui: ${ui.map(formatNode).join(' | ')}`);
     }
 
+    for (const ev of pickEvents(group.entries)) {
+      lines.push(`net: ${formatEvent(ev)}`);
+    }
+
     for (const entry of group.entries) {
       const text = entry.utterance.trim();
       if (text === '') continue;
@@ -111,6 +128,10 @@ function describeSession(input: RenderInput): string {
   bits.push(`${input.keyframes.length} frames`);
   const utterances = input.timeline.filter((e) => e.utterance.trim() !== '').length;
   bits.push(`${utterances} utterances`);
+  // Say what was captured even when nothing notable surfaced below, so a quiet
+  // timeline reads as "nothing broke" rather than "nothing was recorded".
+  const events = summariseEvents(input.capturedEvents ?? []);
+  if (events) bits.push(events);
   if (meta.note) bits.push(`note: ${String(meta.note).slice(0, 120)}`);
   return bits.join(' · ');
 }
@@ -155,6 +176,24 @@ function pickNodes(entries: TimelineEntry[], max: number): UiNode[] {
     }
   }
   return out;
+}
+
+/**
+ * Events for a frame group, deduped. Entries in a group overlap in time, so the
+ * same failed request is routinely attached to several of them.
+ */
+function pickEvents(entries: TimelineEntry[]): TimedEvent[] {
+  const seen = new Set<string>();
+  const out: TimedEvent[] = [];
+  for (const entry of entries) {
+    for (const ev of entry.events ?? []) {
+      const key = `${ev.tMs}|${ev.kind}|${ev.url ?? ''}|${ev.text ?? ''}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(ev);
+    }
+  }
+  return out.sort((a, b) => a.tMs - b.tMs);
 }
 
 /**

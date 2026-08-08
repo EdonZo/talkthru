@@ -45,6 +45,17 @@ async function installPackage(pkg: string): Promise<{ ok: boolean; detail: strin
       ok: false,
       detail: `run: sudo apt-get install -y ${pkg === 'whisper-cpp' ? 'whisper.cpp' : pkg}`,
     };
+  } else if (platform === 'win32') {
+    // winget ships with Windows 11 and is the closest thing to a default.
+    // whisper.cpp has no winget package, so say so rather than fail opaquely.
+    if (pkg === 'whisper-cpp') {
+      return {
+        ok: false,
+        detail: 'no winget package for whisper.cpp — see https://github.com/ggml-org/whisper.cpp, then set TALKTHRU_WHISPER',
+      };
+    }
+    manager = 'winget';
+    args = ['install', '--silent', '--accept-package-agreements', '--accept-source-agreements', '-e', '--id', 'Gyan.FFmpeg'];
   } else {
     return { ok: false, detail: `install ${pkg} manually on ${platform}` };
   }

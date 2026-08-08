@@ -29,7 +29,7 @@
   "name": "talkthru",
   "url": "https://talkthru.dev/",
   "applicationCategory": "DeveloperApplication",
-  "operatingSystem": "macOS",
+  "operatingSystem": "macOS, Windows, Linux",
   "description": "Record your screen while talking. talkthru turns it into frames plus narration, aligned, and hands it to your coding agent over MCP. Runs fully offline.",
   "license": "https://opensource.org/licenses/MIT",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
@@ -294,8 +294,8 @@
         </div>
       </li>
     </ol>
-    <div class="meta">macOS · ffmpeg + whisper.cpp · no accounts, no keys, no telemetry</div>
-    <p class="tested">Works with a mac screen recording (⌘⇧5) or an iPhone one over AirDrop. Anything that produces a video with sound should work &mdash; point the watcher at a folder.</p>
+    <div class="meta">macOS · Windows · ffmpeg + whisper.cpp · no accounts, no keys, no telemetry</div>
+    <p class="tested">Works with a mac screen recording (⌘⇧5), an iPhone one over AirDrop, or Windows Game Bar (Win+Alt+R). Anything that produces a video with sound should work &mdash; point the watcher at a folder.</p>
   </section>
 
 
@@ -416,6 +416,27 @@
 
 <span class="c">→</span> <span class="m">20 frames</span> · <span class="m">22 utterances</span> · <span class="m">~600 tokens</span> <span class="c">for 107s</span></pre>
     </div>
+  </section>
+
+  <section class="setup">
+    <h2>Element context <span class="once">optional</span></h2>
+    <p class="after" style="margin-top:0;margin-bottom:16px">
+      Hand it a UI hierarchy file and your agent gets stable test ids instead of guessing
+      which component you meant from pixels.
+    </p>
+    <div class="term">
+    <div class="top"><i></i><i></i><i></i><span>session.md</span></div>
+<pre><span class="c">## 00:34 · f11 — frames/f11.jpg</span>
+<span class="m">ui: button#checkout-submit "Place order" @24,680 342x48</span>
+- [00:39] <span class="a">"this button is too small, I keep missing it"</span></pre>
+    </div>
+    <p class="after">
+      A timestamped JSON sidecar your app writes — <code class="inl">{ tMs, nodes[] }</code>,
+      no iOS-specific assumption in it. Common alternate spellings
+      (<code class="inl">tag</code>, <code class="inl">id</code>, <code class="inl">text</code>,
+      <code class="inl">bounds</code>) are accepted, so a DOM client can emit its natural shape.
+      <a href="https://github.com/EdonZo/talkthru/blob/main/docs/hierarchy.md">Format and how to write a client &rarr;</a>
+    </p>
   </section>
 
   <section class="setup">
