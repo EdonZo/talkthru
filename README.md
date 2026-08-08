@@ -15,7 +15,7 @@ agent:  sees both screens, finds both components, fixes them.
 
 Runs entirely on your machine. No accounts, no uploads, no API keys.
 
-Works with a mac screen recording (⌘⇧5) or an iPhone one over AirDrop. Any video with sound works — point the watcher at a folder.
+Works with a mac screen recording (⌘⇧5), an iPhone one over AirDrop, or Windows Game Bar. Any video with sound works — point the watcher at a folder.
 
 [![Watch the 70-second demo](https://img.youtube.com/vi/3BimSScnGOg/maxresdefault.jpg)](https://youtu.be/3BimSScnGOg)
 
@@ -180,6 +180,91 @@ Your words, attached to the screen that was up when you said them:
 ```
 
 Plus the frames. A two-minute session is about 600 tokens.
+
+---
+
+## Element context (optional)
+
+Point talkthru at a UI hierarchy file and your agent gets element types, labels
+and **stable test ids** instead of guessing which component you meant from
+pixels:
+
+```bash
+talkthru process recording.mp4 --hierarchy hierarchy.json
+```
+
+```markdown
+## 00:34 · f11 — `frames/f11.jpg`
+ui: button#checkout-submit "Place order" @24,680 342x48
+- [00:39] "this button is too small, I keep missing it"
+```
+
+It is a timestamped sidecar your app writes — nothing here generates it, and the
+format is plain JSON with no iOS-specific assumption:
+
+```json
+{ "snapshots": [
+  { "tMs": 1200, "nodes": [
+    { "type": "button", "testId": "checkout-submit", "label": "Place order",
+      "rect": [24, 680, 342, 48], "depth": 4 }
+  ] }
+] }
+```
+
+Common alternate spellings (`tag`, `id`, `text`, `bounds`, `elements`, …) are
+accepted as-is, so a DOM client can usually emit its natural shape. Malformed
+files are ignored with a warning rather than failing the recording.
+
+**Full format: [docs/hierarchy.md](https://github.com/EdonZo/talkthru/blob/main/docs/hierarchy.md)** — fields, aliases, ranking rules, and how to write a client.
+
+---
+
+## Network and console (optional)
+
+Drop an `events.json` next to your recording and failed requests land under the
+frame you were looking at:
+
+```markdown
+## 00:34 · f11 — `frames/f11.jpg`
+ui: button#checkout-submit "Place order" @24,680 342x48
+net: POST https://api.example.com/checkout 500 340ms
+- [00:39] "I tapped place order and nothing happened"
+```
+
+```json
+{ "events": [
+  { "tMs": 12400, "kind": "network", "method": "POST",
+    "url": "https://api.example.com/checkout", "status": 500, "durationMs": 340 },
+  { "tMs": 12450, "kind": "console", "level": "error", "text": "TypeError: ..." }
+] }
+```
+
+**No headers, no bodies** — auth tokens live in headers and the point of this
+tool is that your data stays on your machine. Secret-looking query values are
+replaced with `REDACTED` at parse time. Everything you send is stored; only
+failures and `error`/`warn` reach the agent by default, because two minutes of
+XHR is more text than the frames and narration combined.
+
+**Full format: [docs/events.md](https://github.com/EdonZo/talkthru/blob/main/docs/events.md)**
+
+---
+
+## Windows
+
+`Win+Alt+R` (Game Bar) records to `Videos\Captures`, which is where the watcher
+looks by default — no name filter there, because that folder holds nothing else:
+
+```powershell
+winget install -e --id Gyan.FFmpeg
+npx talkthru watch
+```
+
+whisper.cpp has no winget package. Build it from
+[ggml-org/whisper.cpp](https://github.com/ggml-org/whisper.cpp) and point
+`TALKTHRU_WHISPER` at the binary.
+
+Written and unit-tested for Windows, but **not yet run on a Windows machine** —
+I do not have one. If you try it, an issue either way is useful.
 
 ---
 

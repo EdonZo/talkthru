@@ -108,6 +108,33 @@ export interface SessionMetadata {
   [key: string]: unknown;
 }
 
+/**
+ * A network call or console line, timestamped against the recording.
+ *
+ * Headers and bodies are deliberately not part of this shape. Auth tokens live
+ * in headers, and the promise talkthru makes is that your data stays on your
+ * machine — which stops being true the moment the agent reads it and hands it
+ * to a model. Method, URL, status and duration answer "which call broke"
+ * without carrying a credential along with the answer.
+ */
+export interface TimedEvent {
+  /** Milliseconds from the start of the recording. */
+  tMs: number;
+  kind: 'network' | 'console';
+  /** network: HTTP method, uppercased. */
+  method?: string;
+  /** network: URL with secret-looking query values redacted. */
+  url?: string;
+  /** network: HTTP status. 0 means the request never completed. */
+  status?: number;
+  /** network: wall time of the request, ms. */
+  durationMs?: number;
+  /** console: `error` | `warn` | `info` | `log` | `debug`. */
+  level?: string;
+  /** console: the message, truncated. */
+  text?: string;
+}
+
 /** One `{utterance, timestamp, keyframe, ui_context}` tuple — the core product. */
 export interface TimelineEntry {
   utterance: string;
@@ -117,6 +144,8 @@ export interface TimelineEntry {
   keyframePath: string | null;
   uiContext: UiNode[];
   occlusions: string[];
+  /** Notable network/console activity around this utterance. */
+  events?: TimedEvent[];
 }
 
 export interface SessionStatus {
