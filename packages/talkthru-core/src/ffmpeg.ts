@@ -412,21 +412,50 @@ export async function framesToVideo(
   opts: { signal?: AbortSignal } = {},
 ): Promise<void> {
   await fs.mkdir(path.dirname(outPath), { recursive: true });
-  await run(
-    tools.ffmpeg,
-    [
-      '-v', 'error',
-      '-nostdin',
-      '-framerate', String(fps),
-      '-pattern_type', 'glob',
-      '-i', pattern,
-      '-c:v', 'libx264',
-      '-pix_fmt', 'yuv420p',
-      '-y',
-      outPath,
-    ],
-    { signal: opts.signal },
-  );
+
+  // Windows ffmpeg builds are compiled without glob support — "Pattern type
+  // 'glob' was selected but globbing is not supported by this libavformat
+  // build" — so every frame-sequence upload failed there. Expanding the pattern
+  // in Node and handing ffmpeg an explicit list behaves the same on all three
+  // platforms, and takes shell quoting out of the picture at the same time.
+  const dir = path.dirname(pattern);
+  const ext = path.extname(pattern).toLowerCase();
+  const names = (await fs.readdir(dir)).filter((n) => path.extname(n).toLowerCase() === ext).sort();
+  if (names.length === 0) {
+    throw new TalkthruError(ErrorCodes.NO_MEDIA, `No ${ext} frames to assemble in ${dir}`);
+  }
+
+  // concat demuxer: absolute paths need -safe 0, ffmpeg takes forward slashes
+  // on Windows too, and a quote inside a name has to be closed and reopened.
+  const entry = (name: string) =>
+    `file '${path.join(dir, name).replace(/\\/g, '/').replace(/'/g, "'\\''")}'`;
+  const seconds = (1 / fps).toFixed(6);
+  const listPath = `${outPath}.concat.txt`;
+  // The final entry's duration is ignored by the demuxer, so the last frame is
+  // repeated — without it that frame lasts no time and drops out of the video.
+  const lines = names.map((n) => `${entry(n)}\nduration ${seconds}`);
+  await fs.writeFile(listPath, `${lines.join('\n')}\n${entry(names[names.length - 1]!)}\n`, 'utf8');
+
+  try {
+    await run(
+      tools.ffmpeg,
+      [
+        '-v', 'error',
+        '-nostdin',
+        '-f', 'concat',
+        '-safe', '0',
+        '-i', listPath,
+        '-r', String(fps),
+        '-c:v', 'libx264',
+        '-pix_fmt', 'yuv420p',
+        '-y',
+        outPath,
+      ],
+      { signal: opts.signal },
+    );
+  } finally {
+    await fs.rm(listPath, { force: true });
+  }
 }
 
 /**

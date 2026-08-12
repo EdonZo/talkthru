@@ -1,0 +1,14 @@
+# Check every text file out with LF, on every platform.
+#
+# Without this, a Windows clone gets CRLF and the golden bundle test compares
+# markdown the pipeline generated with \n against a fixture read back with
+# \r\n. That failure looks like a rendering regression and is not one.
+* text=auto eol=lf
+
+# Fixtures are byte-compared, so nothing here may ever be rewritten.
+fixtures/** -text
+*.mp4 binary
+*.mov binary
+*.wav binary
+*.jpg binary
+*.png binary

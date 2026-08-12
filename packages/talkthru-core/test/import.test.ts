@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { importMedia } from '../src/import.js';
-import { readStatus, sessionDir } from '../src/store.js';
+import { readStatus, safeFileName, sessionDir } from '../src/store.js';
 import { BUNDLE, STORE } from '../src/constants.js';
 import { ErrorCodes } from '../src/errors.js';
 import { tempHome } from './helpers.js';
@@ -137,12 +137,18 @@ describe('importMedia sidecars', () => {
 });
 
 describe('importMedia filename safety', () => {
-  it('sanitises a name with spaces and quotes', async () => {
-    const id = await importMedia(cfg, [await srcFile('my clip "final".mp4')]);
+  it('sanitises a name with spaces', async () => {
+    const id = await importMedia(cfg, [await srcFile('my clip final.mp4')]);
     const entries = await fs.readdir(await rawDirOf(id));
     expect(entries).toHaveLength(1);
     expect(entries[0]).not.toContain(' ');
-    expect(entries[0]).not.toContain('"');
+  });
+
+  it('strips quotes from a name', () => {
+    // Checked against the sanitiser rather than through the filesystem: NTFS
+    // will not create a file with a double quote in it, so the round-trip
+    // version of this could only ever run on macOS and Linux.
+    expect(safeFileName('my clip "final".mp4')).not.toContain('"');
   });
 
   it('does not let a traversal in the basename escape the session dir', async () => {
