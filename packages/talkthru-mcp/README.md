@@ -1,6 +1,6 @@
 # talkthru
 
-**[talkthru.dev](https://talkthru.dev)** · [npm](https://www.npmjs.com/package/talkthru) · MIT
+**[talkthru.dev](https://talkthru.dev)** · [npm](https://www.npmjs.com/package/talkthru) · [@dr_edon](https://x.com/dr_edon) · MIT
 
 **An automated feedback loop for any app.** Screen-record your app on your phone and talk
 while you use it. Send it to your machine and your coding agent gets everything you
