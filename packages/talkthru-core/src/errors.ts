@@ -37,6 +37,8 @@ export const ErrorCodes = {
   UNAUTHORIZED: 'UNAUTHORIZED',
   BAD_REQUEST: 'BAD_REQUEST',
   PORT_IN_USE: 'PORT_IN_USE',
+  /** Re-processing would replace a bundle that has narration with one that has none. */
+  WOULD_LOSE_TRANSCRIPT: 'WOULD_LOSE_TRANSCRIPT',
   IO_FAILED: 'IO_FAILED',
 } as const;
 

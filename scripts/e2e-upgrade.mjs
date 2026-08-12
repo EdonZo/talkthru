@@ -79,6 +79,32 @@ try {
   const utterancesBefore = (show.match(/^- \[/gm) ?? []).length;
   check('old transcript intact', utterancesBefore > 0, `${utterancesBefore} utterances`);
 
+  /* 2b ── re-processing a session the old version made (issue #13) ───────── */
+  // The published build wrote its 16 kHz wav into raw/, where discovery used to
+  // pick it over the real narration — decode failed and the frames-only result
+  // overwrote a good bundle. Everyone upgrading has sessions in that shape, so
+  // this is checked against a session an older talkthru actually produced.
+  // Only a session that has BOTH the stray intermediate and a transcript can
+  // demonstrate the loss — the video-only one has no narration to lose.
+  const target = sessions
+    .map((id) => ({
+      id,
+      stray: fs.existsSync(path.join(HOME, 'sessions', id, 'raw', 'audio-16k.wav')),
+      utterances: (newCli('show', id).match(/^- \[/gm) ?? []).length,
+    }))
+    .find((s) => s.stray && s.utterances > 0);
+  if (!target) {
+    check('an old session has both a transcript and a stray intermediate', false);
+  } else {
+    newCli('process', target.id);
+    const after = (newCli('show', target.id).match(/^- \[/gm) ?? []).length;
+    check(
+      're-processing an old session keeps its transcript',
+      after === target.utterances,
+      `${target.utterances} utterances kept`,
+    );
+  }
+
   /* 3 ── MCP: what a configured client actually does ────────────────────── */
   const mcpResult = await new Promise((resolve) => {
     const child = spawn('node', [NEW_MCP], {

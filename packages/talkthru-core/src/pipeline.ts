@@ -83,6 +83,10 @@ export async function discoverInputs(rawDir: string): Promise<DiscoveredInputs> 
       }
       continue;
     }
+    // Anything the pipeline wrote is not an upload. Sessions created before
+    // intermediates moved to `work/` still have audio-16k.wav here, and it
+    // sorts ahead of most real names — picking it loses the narration.
+    if (BUNDLE.WORK_FILES.has(entry.name.toLowerCase())) continue;
     // Strip with the extension as it was actually spelled: path.basename matches
     // the suffix case-sensitively, so passing an already-lowercased '.json'
     // leaves 'Meta.JSON' intact and the file is never recognised.
@@ -111,6 +115,12 @@ export interface ProcessOptions {
   noAudio?: boolean;
   /** Set false to transcribe in one whole-file pass instead of per speech region. */
   useVad?: boolean;
+  /**
+   * Allow a re-process to replace an existing bundle even when the new one has
+   * lost the narration. Off by default: silently trading a transcript for a
+   * frames-only bundle is how the original recording's feedback disappears.
+   */
+  force?: boolean;
 }
 
 export interface ProcessResult {
@@ -133,6 +143,9 @@ export async function processSession(
 ): Promise<ProcessResult> {
   const dir = sessionDir(cfg, id);
   const rawDir = path.join(dir, BUNDLE.RAW_DIR);
+  // `raw/` holds what the user gave us and nothing else, so that re-processing
+  // sees the same inputs the first run saw.
+  const workDir = path.join(dir, BUNDLE.WORK_DIR);
   const warnings: string[] = [];
 
   // A compacted session has no raw media left by design. Without this check
@@ -159,7 +172,8 @@ export async function processSession(
   let videoPath = inputs.videoPath;
   if (!videoPath && inputs.frameSequenceDir && inputs.frameSequenceExt) {
     const fps = typeof metadata.captureFps === 'number' && metadata.captureFps > 0 ? metadata.captureFps : 2;
-    const built = path.join(rawDir, 'video-from-frames.mp4');
+    await fs.mkdir(workDir, { recursive: true });
+    const built = path.join(workDir, 'video-from-frames.mp4');
     try {
       await framesToVideo(
         tools,
@@ -219,7 +233,8 @@ export async function processSession(
     if (!audioSource) {
       warnings.push('No audio track — nobody narrated this session, or the mic was not captured.');
     } else {
-      const target = path.join(rawDir, 'audio-16k.wav');
+      await fs.mkdir(workDir, { recursive: true });
+      const target = path.join(workDir, 'audio-16k.wav');
       try {
         await extractAudioWav(tools, audioSource, target, { signal: opts.signal, timeoutMs: durationScaledTimeout(durationMs) });
         wavPath = target;
@@ -350,6 +365,34 @@ export async function processSession(
     estimatedTokens: rendered.estimatedTokens,
   };
 
+  // Last gate before the old bundle is gone. A re-process that came back
+  // without the narration is nearly always a broken run (missing whisper, the
+  // wrong audio file picked up), not a real change in the recording — and the
+  // bundle on disk is the only copy of what was said.
+  if (!opts.force) {
+    const previous = await readJson<SessionBundle>(bundlePath(cfg, id));
+    const hadTranscript = (previous?.transcript?.text ?? '').trim().length > 0;
+    if (hadTranscript && transcript.text.trim().length === 0) {
+      // The bundle on disk is still the good one, so the session is still
+      // ready. Without this it would be left in 'processing' (or marked
+      // 'failed' by processSessionSafe) and drop out of get_latest_session —
+      // the refusal would hide the very session it just protected.
+      await patchStatus(cfg, id, {
+        state: 'ready',
+        ...(existing?.warnings ? { warnings: existing.warnings } : {}),
+      });
+      throw new TalkthruError(
+        ErrorCodes.WOULD_LOSE_TRANSCRIPT,
+        `Re-processing ${id} produced no narration, but the bundle on disk has some — refusing to overwrite it`,
+        {
+          hint:
+            'The existing session.md is untouched. Usually this means transcription failed this ' +
+            'time (check `talkthru doctor`). Pass --force if you really want the frames-only bundle.',
+        },
+      );
+    }
+  }
+
   await writeJsonAtomic(bundlePath(cfg, id), bundle);
   await writeTextAtomic(markdownPath(cfg, id), rendered.markdown);
   await patchStatus(cfg, id, { state: 'ready', warnings });
@@ -368,6 +411,9 @@ export async function processSessionSafe(
   } catch (e) {
     const err = toTalkthruError(e);
     log.error(`session ${id} failed`, err.toJSON());
+    // A refused overwrite is not a broken session — the previous bundle is
+    // intact and the pipeline already put the state back to ready.
+    if (err.code === ErrorCodes.WOULD_LOSE_TRANSCRIPT) return null;
     await patchStatus(cfg, id, { state: 'failed', error: err.toJSON() }).catch(() => undefined);
     return null;
   }
