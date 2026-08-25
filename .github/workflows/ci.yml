@@ -17,6 +17,20 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
         node: ['20.11', '22', '24']
+        # The Windows paths are written but were never executed anywhere —
+        # path handling, the PATHEXT binary lookup and the Game Bar capture
+        # folder were all unit-tested against a fake platform. One real runner
+        # is enough to catch the things a fake platform cannot (issue #9).
+        # It does not close #9: no whisper.cpp here, so this proves the
+        # pipeline runs on Windows, not that a real recording transcribes.
+        include:
+          - os: windows-latest
+            node: '22'
+    # Windows runners default to PowerShell, where the `| head -1` and
+    # `cat || true` below are syntax errors rather than test failures.
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
 
@@ -35,6 +49,13 @@ jobs:
       - name: Install ffmpeg (macOS)
         if: runner.os == 'macOS'
         run: brew install ffmpeg || brew upgrade ffmpeg
+
+      # Chocolatey ships with the Windows runners. This is the same binary the
+      # README tells a Windows user to get from winget — either way it has to
+      # end up on PATH as ffmpeg.exe, which is the part resolveBinary cares about.
+      - name: Install ffmpeg (Windows)
+        if: runner.os == 'Windows'
+        run: choco install ffmpeg -y --no-progress
 
       - name: Show toolchain
         run: |
