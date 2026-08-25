@@ -64,23 +64,31 @@ async function statSize(p: string): Promise<number> {
   }
 }
 
-/** The heavy media inside a session's raw dir — what compaction removes. */
+/** The heavy media inside a session's raw and work dirs — what compaction removes. */
 async function heavyFiles(cfg: TalkthruConfig, id: string): Promise<string[]> {
-  const rawDir = path.join(sessionDir(cfg, id), BUNDLE.RAW_DIR);
-  let entries: string[];
-  try {
-    entries = await fs.readdir(rawDir);
-  } catch {
-    return [];
-  }
+  const dir = sessionDir(cfg, id);
   const out: string[] = [];
-  for (const name of entries) {
+
+  const raw = await fs.readdir(path.join(dir, BUNDLE.RAW_DIR)).catch(() => [] as string[]);
+  for (const name of raw) {
     if (KEEP_IN_RAW.has(name.toLowerCase())) continue;
     const ext = path.extname(name).toLowerCase();
     // Frame-sequence uploads put images under raw/frames; those ARE the
     // history for video-less sessions, so only video and audio count as heavy.
-    if (VIDEO_EXT.has(ext) || AUDIO_EXT.has(ext)) out.push(path.join(rawDir, name));
+    if (VIDEO_EXT.has(ext) || AUDIO_EXT.has(ext)) out.push(path.join(dir, BUNDLE.RAW_DIR, name));
   }
+
+  // Everything under work/ was written by the pipeline and can be rebuilt from
+  // raw/, so there is nothing to keep. It has to be swept or the wav we moved
+  // out of raw/ would survive compaction and quietly cost the user the disk
+  // they asked to reclaim.
+  const work = await fs
+    .readdir(path.join(dir, BUNDLE.WORK_DIR), { withFileTypes: true })
+    .catch(() => []);
+  for (const entry of work) {
+    if (entry.isFile()) out.push(path.join(dir, BUNDLE.WORK_DIR, entry.name));
+  }
+
   return out;
 }
 

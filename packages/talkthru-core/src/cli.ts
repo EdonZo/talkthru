@@ -78,10 +78,12 @@ Usage
       Run the ingest daemon. Loopback only unless --lan.
 
   talkthru process <file.mp4> [audio.wav] [--hierarchy h.json] [--no-audio]
-  talkthru process <session-id>
+  talkthru process <session-id> [--force]
       Build a bundle from local files, or re-process an existing session.
       An events.json beside the media adds network/console context; see
       docs/events.md and docs/hierarchy.md for both sidecar formats.
+      A re-process that comes back with no narration will not overwrite a
+      bundle that has some; --force says do it anyway.
 
   talkthru watch                       watch ~/Downloads, SCREEN RECORDINGS ONLY
   talkthru watch <dir>                 watch <dir>, ANY video file
@@ -177,7 +179,10 @@ async function cmdProcess(cfg: TalkthruConfig, args: Args): Promise<void> {
     out(`created session ${id}`);
   }
 
-  const result = await processSession(cfg, id, { noAudio: args.flags.get('no-audio') === true });
+  const result = await processSession(cfg, id, {
+    noAudio: args.flags.get('no-audio') === true,
+    force: args.flags.get('force') === true,
+  });
   out(`ready: ${markdownPath(cfg, id)}`);
   out(`  ${result.bundle.keyframes.length} frames · ${result.bundle.timeline.length} timeline entries · ~${result.bundle.estimatedTokens} tokens`);
   for (const w of result.warnings) out(`  warning: ${w}`);

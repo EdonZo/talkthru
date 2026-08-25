@@ -83,6 +83,22 @@ describe('compactSession', () => {
     await expect(fs.access(path.join(sessionDir(cfg, id), 'session.md'))).resolves.toBeUndefined();
   });
 
+  it('reclaims the pipeline work dir, which is rebuildable from raw/', async () => {
+    // The 16 kHz wav moved out of raw/ to stop re-processing mistaking it for
+    // an upload (issue #13). If compaction stopped following it there, every
+    // compacted session would quietly keep a wav the user asked us to free.
+    const id = await mkSession({ state: 'ready', daysAgo: 30 });
+    const workDir = path.join(sessionDir(cfg, id), 'work');
+    await fs.mkdir(workDir, { recursive: true });
+    await fs.writeFile(path.join(workDir, 'audio-16k.wav'), Buffer.alloc(4000, 3));
+
+    const result = await compactSession(cfg, id);
+
+    expect(result.removed).toContain('audio-16k.wav');
+    expect(result.freedBytes).toBeGreaterThanOrEqual(4000);
+    await expect(fs.access(path.join(workDir, 'audio-16k.wav'))).rejects.toThrow();
+  });
+
   it('removes the archived original along with the session', async () => {
     const id = await mkSession({ state: 'ready', daysAgo: 30, archived: true });
     const status = await readStatus(cfg, id);

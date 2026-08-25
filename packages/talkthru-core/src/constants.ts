@@ -237,6 +237,19 @@ export const BUNDLE = {
   STATUS_NAME: 'status.json',
   FRAMES_DIR: 'frames',
   RAW_DIR: 'raw',
+  /**
+   * Scratch space for files the pipeline itself produces (the 16 kHz wav, a
+   * video built from a frame sequence). These used to be written into `raw/`,
+   * where the next run mistook them for uploads — see WORK_FILES.
+   */
+  WORK_DIR: 'work',
+  /**
+   * Names the pipeline writes. Discovery ignores them wherever it finds them:
+   * sessions created before `work/` existed still have `audio-16k.wav` sitting
+   * in `raw/`, and re-processing one of those picked the intermediate over the
+   * real narration, then overwrote a good bundle with a frames-only one.
+   */
+  WORK_FILES: new Set(['audio-16k.wav', 'video-from-frames.mp4']),
 } as const;
 
 export const MCP = {
