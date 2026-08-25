@@ -236,7 +236,9 @@ export function createServer(cfg: TalkthruConfig = resolveConfig()): McpServer {
       title: 'List narrated sessions',
       description:
         'List recent screen recordings, newest first, with duration, frame count and a one-line ' +
-        'summary of what the person said.',
+        'summary of what the person said. Text only and cheap — use it to find the id of the ' +
+        'session the user means, then call get_session. Sessions still processing are listed ' +
+        'with their state rather than hidden.',
       inputSchema: {
         limit: z
           .number()
@@ -262,7 +264,10 @@ export function createServer(cfg: TalkthruConfig = resolveConfig()): McpServer {
     {
       title: 'Get one narrated session',
       description:
-        'Return a specific session by id: narration aligned to keyframes, UI context, and frame images.',
+        'Return a specific session by id: narration aligned to keyframes, UI context, and frame ' +
+        'images. Use this when the user names an older recording; for "the one I just made", ' +
+        'get_latest_session saves a lookup. Ids come from list_sessions. Images are capped, so a ' +
+        'long session returns its frames evenly sampled rather than all of them.',
       inputSchema: {
         session_id: z.string().describe('Session id, e.g. 20260803-001500-a1b2c3.'),
         include_images: z.boolean().optional().describe('Attach keyframe images (default true).'),
@@ -283,8 +288,17 @@ export function createServer(cfg: TalkthruConfig = resolveConfig()): McpServer {
     'delete_session',
     {
       title: 'Delete a narrated session',
-      description: 'Permanently delete a session and its frames from disk.',
-      inputSchema: { session_id: z.string().describe('Session id to delete.') },
+      description:
+        'Permanently delete one session — its frames, transcript and bundle — from disk. ' +
+        'This cannot be undone and there is no confirmation step, so only call it when the ' +
+        'user asked for that session to be deleted. The original recording archived under ' +
+        '~/.talkthru/archive is left alone. To free disk while keeping the frames and ' +
+        'narration, the user wants `talkthru compact` instead, not this.',
+      inputSchema: {
+        session_id: z
+          .string()
+          .describe('Session id to delete, e.g. 20260803-001500-a1b2c3. Not a file path.'),
+      },
     },
     async ({ session_id }) => {
       if (!isValidSessionId(session_id)) return textResult(`"${session_id}" is not a session id.`, true);
