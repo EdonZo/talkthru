@@ -264,3 +264,107 @@ describe('degraded inputs', () => {
     expect(bundle.timeline[0]!.keyframeIndex).toBe(1);
   });
 });
+
+/**
+ * Issue #13. Re-processing a session used to pick up the pipeline's own
+ * audio-16k.wav instead of the narration, fail to decode it, and write the
+ * resulting frames-only bundle over the good one. The transcript was the only
+ * copy of what the person said, so this lost real work.
+ */
+describe('re-processing an existing session', () => {
+  const rawOf = (id: string) => path.join(sessionDir(cfg, id), 'raw');
+  const workOf = (id: string) => path.join(sessionDir(cfg, id), 'work');
+
+  it('ignores an audio intermediate left in raw/ by an older version', async () => {
+    const id = await stage([[FIXTURE_VIDEO, 'video.mp4']]);
+    // Sorts ahead of 'narration.wav', which is how it won before.
+    await fs.writeFile(path.join(rawOf(id), 'audio-16k.wav'), 'ours, not an upload');
+    await fs.writeFile(path.join(rawOf(id), 'narration.wav'), 'the real thing');
+
+    const found = await discoverInputs(rawOf(id));
+
+    expect(found.audioPath).toMatch(/narration\.wav$/);
+  });
+
+  it('ignores a video intermediate left in raw/ by an older version', async () => {
+    const id = await stage([]);
+    await fs.writeFile(path.join(rawOf(id), 'video-from-frames.mp4'), 'ours');
+
+    expect((await discoverInputs(rawOf(id))).videoPath).toBeUndefined();
+  });
+
+  it('keeps its own intermediates out of raw/', async () => {
+    const { words } = await loadFixtureTranscript();
+    const id = await stage([[FIXTURE_VIDEO, 'video.mp4']]);
+
+    await processSession(cfg, id, { transcriber: new FakeTranscriber(words), useVad: false });
+
+    expect(await fs.readdir(rawOf(id))).not.toContain('audio-16k.wav');
+    expect(await fs.readdir(workOf(id))).toContain('audio-16k.wav');
+  });
+
+  it('re-processing a good session twice keeps the narration', async () => {
+    const { words } = await loadFixtureTranscript();
+    const id = await stage([[FIXTURE_VIDEO, 'video.mp4']]);
+    const opts = { transcriber: new FakeTranscriber(words), useVad: false };
+
+    const first = await processSession(cfg, id, opts);
+    const second = await processSession(cfg, id, opts);
+
+    expect(second.bundle.timeline).toHaveLength(first.bundle.timeline.length);
+    expect(second.bundle.transcript.text).toBe(first.bundle.transcript.text);
+  });
+
+  it('refuses to replace a transcript with a frames-only bundle', async () => {
+    const { words } = await loadFixtureTranscript();
+    const id = await stage([[FIXTURE_VIDEO, 'video.mp4']]);
+    await processSession(cfg, id, { transcriber: new FakeTranscriber(words), useVad: false });
+    const good = await fs.readFile(path.join(sessionDir(cfg, id), 'session.md'), 'utf8');
+
+    // Whisper missing, wrong model, bad audio — all land here.
+    await expect(
+      processSession(cfg, id, { transcriber: new NullTranscriber('whisper gone'), useVad: false }),
+    ).rejects.toMatchObject({ code: 'WOULD_LOSE_TRANSCRIPT' });
+
+    expect(await fs.readFile(path.join(sessionDir(cfg, id), 'session.md'), 'utf8')).toBe(good);
+  });
+
+  it('leaves the session ready after refusing, so it is still the latest', async () => {
+    const { words } = await loadFixtureTranscript();
+    const id = await stage([[FIXTURE_VIDEO, 'video.mp4']]);
+    await processSession(cfg, id, { transcriber: new FakeTranscriber(words), useVad: false });
+
+    const result = await processSessionSafe(cfg, id, {
+      transcriber: new NullTranscriber('whisper gone'),
+      useVad: false,
+    });
+
+    expect(result).toBeNull();
+    expect((await readStatus(cfg, id))?.state).toBe('ready');
+  });
+
+  it('--force overwrites anyway, for the person who means it', async () => {
+    const { words } = await loadFixtureTranscript();
+    const id = await stage([[FIXTURE_VIDEO, 'video.mp4']]);
+    await processSession(cfg, id, { transcriber: new FakeTranscriber(words), useVad: false });
+
+    const { bundle } = await processSession(cfg, id, {
+      transcriber: new NullTranscriber('deliberate'),
+      useVad: false,
+      force: true,
+    });
+
+    expect(bundle.transcript.text).toBe('');
+  });
+
+  it('does not block a first run, which has no bundle to lose', async () => {
+    const id = await stage([[FIXTURE_VIDEO, 'video.mp4']]);
+
+    const { bundle } = await processSession(cfg, id, {
+      transcriber: new NullTranscriber('no speech'),
+      useVad: false,
+    });
+
+    expect(bundle.keyframes.length).toBeGreaterThan(0);
+  });
+});
