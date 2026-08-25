@@ -1,17 +1,17 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
   "name": "io.github.EdonZo/talkthru",
-  "description": "Talk while using your app \u2014 your coding agent gets each sentence aligned to the frame. Fully local.",
+  "description": "Talk while using your app — your coding agent gets each sentence aligned to the frame. Fully local.",
   "repository": {
     "url": "https://github.com/EdonZo/talkthru",
     "source": "github"
   },
-  "version": "0.3.0",
+  "version": "0.3.1",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "talkthru-mcp",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "transport": {
         "type": "stdio"
       }
